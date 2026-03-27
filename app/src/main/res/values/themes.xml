@@ -1,11 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.CarCost" parent="Theme.Material3.Light.NoActionBar">
+
+    <style name="Base.Theme.CarCost" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/top_card_fill</item>
         <item name="android:statusBarColor">@color/top_card_fill</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:navigationBarColor">@color/screen_background</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
         <item name="android:windowBackground">@color/screen_background</item>
     </style>
 
-    <style name="Theme.CarCost" parent="Base.Theme.CarCost" />
+    <style name="Theme.CarCost" parent="Base.Theme.CarCost"/>
+
 </resources>

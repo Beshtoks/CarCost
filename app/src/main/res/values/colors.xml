@@ -1,42 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="screen_background">#EEF2F7</color>
 
-    <color name="top_card_fill">#2D66D7</color>
-    <color name="top_card_stroke">#1F4FB6</color>
-    <color name="top_card_title">#EAF1FF</color>
+    <!-- ФОН (единственное изменение) -->
+    <color name="screen_background">#121417</color>
+
+    <!-- TOP (оставляем светлыми как было) -->
+    <color name="top_card_fill">#4A90E2</color>
+    <color name="top_card_stroke">#357ABD</color>
+    <color name="top_card_title">#FFFFFF</color>
     <color name="top_card_value">#FFFFFF</color>
 
-    <color name="edit_button_fill">#3C7BEE</color>
-    <color name="edit_button_stroke">#205DCC</color>
+    <color name="edit_button_fill">#5AA0F2</color>
+    <color name="edit_button_stroke">#357ABD</color>
 
-    <color name="card_white">#FFFFFF</color>
-    <color name="divider_light">#DDE4F0</color>
-    <color name="body_dark">#26364A</color>
+    <!-- ОБЩИЕ -->
+    <color name="divider_light">#DADADA</color>
+    <color name="body_dark">#222222</color>
 
-    <color name="income_fill">#F4FBF6</color>
-    <color name="income_stroke">#47A66A</color>
-    <color name="income_title">#1E8C53</color>
-    <color name="income_value">#168049</color>
+    <!-- ДОХОД -->
+    <color name="income_fill">#E8F5E9</color>
+    <color name="income_stroke">#66BB6A</color>
+    <color name="income_title">#2E7D32</color>
+    <color name="income_value">#2E7D32</color>
 
-    <color name="expense_fill">#FFF5F5</color>
-    <color name="expense_stroke">#E46767</color>
-    <color name="expense_title">#D53A3A</color>
-    <color name="expense_value">#D53A3A</color>
+    <!-- РАСХОД -->
+    <color name="expense_fill">#FDECEA</color>
+    <color name="expense_stroke">#EF5350</color>
+    <color name="expense_title">#C62828</color>
+    <color name="expense_value">#C62828</color>
 
-    <color name="purple_fill">#FBF8FF</color>
-    <color name="purple_stroke">#8F6ED8</color>
-    <color name="purple_title">#6B4BC6</color>
-    <color name="purple_value">#2C56C9</color>
+    <!-- СЕБЕСТОИМОСТЬ -->
+    <color name="purple_fill">#F3E5F5</color>
+    <color name="purple_stroke">#9575CD</color>
+    <color name="purple_title">#6A1B9A</color>
+    <color name="purple_value">#3949AB</color>
 
-    <color name="soon_fill">#F8FBFF</color>
-    <color name="soon_stroke">#78A1E8</color>
-    <color name="soon_title">#4B68C4</color>
-    <color name="soon_left_title">#3B67C6</color>
-    <color name="soon_right_title">#2D8B56</color>
+    <!-- СКОРО -->
+    <color name="soon_fill">#E3F2FD</color>
+    <color name="soon_stroke">#64B5F6</color>
+    <color name="soon_title">#1565C0</color>
+    <color name="soon_left_title">#1565C0</color>
+    <color name="soon_right_title">#2E7D32</color>
 
-    <color name="action_green_fill">#35A858</color>
-    <color name="action_green_stroke">#228244</color>
-    <color name="action_red_fill">#E14A4A</color>
-    <color name="action_red_stroke">#BD2F2F</color>
+    <!-- КНОПКИ -->
+    <color name="action_green_fill">#4CAF50</color>
+    <color name="action_green_stroke">#2E7D32</color>
+
+    <color name="action_red_fill">#F44336</color>
+    <color name="action_red_stroke">#C62828</color>
+
 </resources>
