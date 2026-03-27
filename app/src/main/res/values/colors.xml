@@ -1,5 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="screen_background">#EEF2F7</color>
+
+    <color name="top_card_fill">#2D66D7</color>
+    <color name="top_card_stroke">#1F4FB6</color>
+    <color name="top_card_title">#EAF1FF</color>
+    <color name="top_card_value">#FFFFFF</color>
+
+    <color name="edit_button_fill">#3C7BEE</color>
+    <color name="edit_button_stroke">#205DCC</color>
+
+    <color name="card_white">#FFFFFF</color>
+    <color name="divider_light">#DDE4F0</color>
+    <color name="body_dark">#26364A</color>
+
+    <color name="income_fill">#F4FBF6</color>
+    <color name="income_stroke">#47A66A</color>
+    <color name="income_title">#1E8C53</color>
+    <color name="income_value">#168049</color>
+
+    <color name="expense_fill">#FFF5F5</color>
+    <color name="expense_stroke">#E46767</color>
+    <color name="expense_title">#D53A3A</color>
+    <color name="expense_value">#D53A3A</color>
+
+    <color name="purple_fill">#FBF8FF</color>
+    <color name="purple_stroke">#8F6ED8</color>
+    <color name="purple_title">#6B4BC6</color>
+    <color name="purple_value">#2C56C9</color>
+
+    <color name="soon_fill">#F8FBFF</color>
+    <color name="soon_stroke">#78A1E8</color>
+    <color name="soon_title">#4B68C4</color>
+    <color name="soon_left_title">#3B67C6</color>
+    <color name="soon_right_title">#2D8B56</color>
+
+    <color name="action_green_fill">#35A858</color>
+    <color name="action_green_stroke">#228244</color>
+    <color name="action_red_fill">#E14A4A</color>
+    <color name="action_red_stroke">#BD2F2F</color>
 </resources>

@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">CarCost</string>
+
+    <string name="top_mileage">Пробег</string>
+    <string name="top_month_income">Доход месяца</string>
+    <string name="top_fuel_price">Цена топлива</string>
+    <string name="edit">Изменить</string>
+
+    <string name="income_title">Доходы</string>
+    <string name="expense_title">Расходы</string>
+    <string name="month">Месяц:</string>
+    <string name="year">Год:</string>
+
+    <string name="cost_title">Себестоимость</string>
+    <string name="cost_today_km">1 км (сегодня):</string>
+    <string name="cost_today_day">За сутки:</string>
+
+    <string name="soon_title">Скоро</string>
+    <string name="soon_by_date">По дате:</string>
+    <string name="soon_by_mileage">По пробегу:</string>
+
+    <string name="add_income">+ Доход</string>
+    <string name="add_expense">+ Расход</string>
 </resources>
