@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var cardTopMileage: LinearLayout
     private lateinit var cardTopFuel: LinearLayout
+    private lateinit var cardIncome: LinearLayout
 
     private lateinit var tvMileageValue: TextView
     private lateinit var tvFuelValue: TextView
@@ -131,6 +132,7 @@ class MainActivity : AppCompatActivity() {
 
         cardTopMileage = findViewById(R.id.cardTopMileage)
         cardTopFuel = findViewById(R.id.cardTopFuel)
+        cardIncome = findViewById(R.id.cardIncome)
 
         tvMileageValue = findViewById(R.id.tvMileageValue)
         tvFuelValue = findViewById(R.id.tvFuelValue)
@@ -165,6 +167,11 @@ class MainActivity : AppCompatActivity() {
             showFuelInputDialog()
         }
 
+        cardIncome.setOnLongClickListener {
+            startActivity(Intent(this, JournalActivity::class.java))
+            true
+        }
+
         btnAddIncome.setOnClickListener {
             incomeLauncher.launch(Intent(this, IncomeEntryActivity::class.java))
         }
@@ -183,7 +190,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        loadStoredData()
+        updateAutoStartMileage()
+        updateIncomeValues()
+        updateExpenseValues()
+        updateSoonDateValues()
         updateSoonMileageValues()
+        updateTopSalaryValue()
         updateCostValues()
     }
 

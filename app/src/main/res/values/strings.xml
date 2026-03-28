@@ -85,6 +85,16 @@
     <string name="message_mileage_required_for_replacement">Для установки обязателен пробег</string>
     <string name="add_title_row">Добавить ещё одну строку названия</string>
 
+    <string name="journal_title">Журнал записей</string>
+    <string name="journal_empty">Записей пока нет</string>
+    <string name="journal_delete">Удалить</string>
+    <string name="journal_close">Закрыть</string>
+    <string name="journal_deleted">Запись удалена</string>
+    <string name="journal_delete_failed">Не удалось удалить запись</string>
+    <string name="journal_type_income_short">ДОХ</string>
+    <string name="journal_type_documentation_short">ДОК</string>
+    <string name="journal_type_technique_short">ТЕХ</string>
+
     <string-array name="income_types">
         <item>Агрегаторы</item>
         <item>Терминал</item>
