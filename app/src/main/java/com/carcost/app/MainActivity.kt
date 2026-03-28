@@ -7,6 +7,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.text.NumberFormat
@@ -22,6 +24,20 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var btnAddIncome: Button
     private lateinit var btnAddExpense: Button
+
+    private val incomeLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                Toast.makeText(this, R.string.message_income_saved, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    private val expenseLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                Toast.makeText(this, R.string.message_expense_saved, Toast.LENGTH_SHORT).show()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,11 +61,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnAddIncome.setOnClickListener {
-            startActivity(Intent(this, IncomeEntryActivity::class.java))
+            incomeLauncher.launch(Intent(this, IncomeEntryActivity::class.java))
         }
 
         btnAddExpense.setOnClickListener {
-            startActivity(Intent(this, ExpenseTypeActivity::class.java))
+            expenseLauncher.launch(Intent(this, ExpenseTypeActivity::class.java))
         }
     }
 

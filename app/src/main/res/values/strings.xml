@@ -64,7 +64,10 @@
     <string name="expense_type_technique">Техника</string>
     <string name="expense_type_documentation">Документация</string>
 
-    <string name="message_save_not_implemented">Сохранение пока не реализовано</string>
+    <string name="message_fill_required_fields">Заполни обязательные поля</string>
+    <string name="message_add_one_title">Добавь хотя бы одно название</string>
+    <string name="message_income_saved">Доход сохранён</string>
+    <string name="message_expense_saved">Расход сохранён</string>
     <string name="add_title_row">Добавить ещё одну строку названия</string>
 
     <string-array name="income_types">

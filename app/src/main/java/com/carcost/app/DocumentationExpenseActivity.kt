@@ -1,9 +1,12 @@
 package com.carcost.app
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
@@ -14,6 +17,12 @@ class DocumentationExpenseActivity : AppCompatActivity() {
     private lateinit var spinnerDocumentType: Spinner
     private lateinit var subtypeContainer: LinearLayout
     private lateinit var spinnerDocumentSubtype: Spinner
+
+    private lateinit var etDocumentTitle: EditText
+    private lateinit var etDocumentDate: EditText
+    private lateinit var etDocumentValidUntil: EditText
+    private lateinit var etDocumentAmount: EditText
+    private lateinit var etDocumentComment: EditText
 
     private lateinit var btnDocumentationSave: Button
     private lateinit var btnDocumentationCancel: Button
@@ -26,6 +35,12 @@ class DocumentationExpenseActivity : AppCompatActivity() {
         subtypeContainer = findViewById(R.id.documentationSubtypeContainer)
         spinnerDocumentSubtype = findViewById(R.id.spinnerDocumentSubtype)
 
+        etDocumentTitle = findViewById(R.id.etDocumentTitle)
+        etDocumentDate = findViewById(R.id.etDocumentDate)
+        etDocumentValidUntil = findViewById(R.id.etDocumentValidUntil)
+        etDocumentAmount = findViewById(R.id.etDocumentAmount)
+        etDocumentComment = findViewById(R.id.etDocumentComment)
+
         btnDocumentationSave = findViewById(R.id.btnDocumentationSave)
         btnDocumentationCancel = findViewById(R.id.btnDocumentationCancel)
 
@@ -33,7 +48,7 @@ class DocumentationExpenseActivity : AppCompatActivity() {
         updateSubtypeVisibility()
 
         btnDocumentationSave.setOnClickListener {
-            Toast.makeText(this, R.string.message_save_not_implemented, Toast.LENGTH_SHORT).show()
+            saveDocumentation()
         }
 
         btnDocumentationCancel.setOnClickListener {
@@ -88,5 +103,18 @@ class DocumentationExpenseActivity : AppCompatActivity() {
         )
         subtypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerDocumentSubtype.adapter = subtypeAdapter
+    }
+
+    private fun saveDocumentation() {
+        val date = etDocumentDate.text.toString().trim()
+        val amount = etDocumentAmount.text.toString().trim()
+
+        if (date.isEmpty() || amount.isEmpty()) {
+            Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        setResult(Activity.RESULT_OK, Intent())
+        finish()
     }
 }

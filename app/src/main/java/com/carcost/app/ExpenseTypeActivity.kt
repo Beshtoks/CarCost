@@ -3,6 +3,7 @@ package com.carcost.app
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 
 class ExpenseTypeActivity : AppCompatActivity() {
@@ -10,6 +11,14 @@ class ExpenseTypeActivity : AppCompatActivity() {
     private lateinit var btnTechnique: Button
     private lateinit var btnDocumentation: Button
     private lateinit var btnExpenseTypeBack: Button
+
+    private val expenseFormLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                setResult(RESULT_OK)
+                finish()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,11 +29,11 @@ class ExpenseTypeActivity : AppCompatActivity() {
         btnExpenseTypeBack = findViewById(R.id.btnExpenseTypeBack)
 
         btnTechnique.setOnClickListener {
-            startActivity(Intent(this, TechniqueExpenseActivity::class.java))
+            expenseFormLauncher.launch(Intent(this, TechniqueExpenseActivity::class.java))
         }
 
         btnDocumentation.setOnClickListener {
-            startActivity(Intent(this, DocumentationExpenseActivity::class.java))
+            expenseFormLauncher.launch(Intent(this, DocumentationExpenseActivity::class.java))
         }
 
         btnExpenseTypeBack.setOnClickListener {

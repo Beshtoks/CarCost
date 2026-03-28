@@ -1,5 +1,7 @@
 package com.carcost.app
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -44,7 +46,7 @@ class IncomeEntryActivity : AppCompatActivity() {
         updateSubtypeVisibility()
 
         btnIncomeSave.setOnClickListener {
-            Toast.makeText(this, R.string.message_save_not_implemented, Toast.LENGTH_SHORT).show()
+            saveIncome()
         }
 
         btnIncomeCancel.setOnClickListener {
@@ -96,5 +98,18 @@ class IncomeEntryActivity : AppCompatActivity() {
         )
         subtypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerIncomeSubtype.adapter = subtypeAdapter
+    }
+
+    private fun saveIncome() {
+        val date = etIncomeDate.text.toString().trim()
+        val amount = etIncomeAmount.text.toString().trim()
+
+        if (date.isEmpty() || amount.isEmpty()) {
+            Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        setResult(Activity.RESULT_OK, Intent())
+        finish()
     }
 }
