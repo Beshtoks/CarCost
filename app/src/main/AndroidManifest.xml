@@ -13,6 +13,11 @@
         android:theme="@style/Theme.CarCost">
 
         <activity
+            android:name=".MileageRegistryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
             android:name=".TechniqueExpenseActivity"
             android:exported="false"
             android:screenOrientation="portrait" />

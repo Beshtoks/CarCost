@@ -1,6 +1,7 @@
 package com.carcost.app
 
 import android.app.Activity
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -11,6 +12,8 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Calendar
+import java.util.Locale
 
 class IncomeEntryActivity : AppCompatActivity() {
 
@@ -43,6 +46,7 @@ class IncomeEntryActivity : AppCompatActivity() {
         btnIncomeCancel = findViewById(R.id.btnIncomeCancel)
 
         setupIncomeTypeSpinner()
+        setupDateField(etIncomeDate)
         updateSubtypeVisibility()
 
         btnIncomeSave.setOnClickListener {
@@ -100,16 +104,106 @@ class IncomeEntryActivity : AppCompatActivity() {
         spinnerIncomeSubtype.adapter = subtypeAdapter
     }
 
-    private fun saveIncome() {
-        val date = etIncomeDate.text.toString().trim()
-        val amount = etIncomeAmount.text.toString().trim()
+    private fun setupDateField(editText: EditText) {
+        editText.keyListener = null
+        editText.isFocusable = false
+        editText.isClickable = true
 
-        if (date.isEmpty() || amount.isEmpty()) {
+        editText.setOnClickListener {
+            showDatePicker(editText)
+        }
+    }
+
+    private fun showDatePicker(target: EditText) {
+        val calendar = parseDateOrToday(target.text.toString().trim())
+
+        val dialog = DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                target.setText(
+                    String.format(
+                        Locale.getDefault(),
+                        "%02d.%02d.%04d",
+                        dayOfMonth,
+                        month + 1,
+                        year
+                    )
+                )
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+
+        dialog.show()
+    }
+
+    private fun parseDateOrToday(value: String): Calendar {
+        val calendar = Calendar.getInstance()
+        val parts = value.split(".")
+
+        if (parts.size == 3) {
+            val day = parts[0].toIntOrNull()
+            val month = parts[1].toIntOrNull()
+            val year = parts[2].toIntOrNull()
+
+            if (day != null && month != null && year != null) {
+                calendar.set(year, month - 1, day)
+            }
+        }
+
+        return calendar
+    }
+
+    private fun saveIncome() {
+        val type = spinnerIncomeType.selectedItem?.toString().orEmpty()
+        val subtype = if (subtypeContainer.visibility == View.VISIBLE) {
+            spinnerIncomeSubtype.selectedItem?.toString()
+        } else {
+            null
+        }
+
+        val title = etIncomeTitle.text.toString().trim()
+        val date = etIncomeDate.text.toString().trim()
+        val rawAmount = etIncomeAmount.text.toString().trim()
+        val comment = etIncomeComment.text.toString().trim()
+
+        if (date.isEmpty() || rawAmount.isEmpty()) {
             Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
             return
         }
 
-        setResult(Activity.RESULT_OK, Intent())
+        val normalizedAmount = normalizeAmount(rawAmount)
+        if (normalizedAmount == null) {
+            Toast.makeText(this, R.string.message_invalid_amount, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val draft = IncomeDraft(
+            type = type,
+            subtype = subtype,
+            title = title,
+            date = date,
+            amount = normalizedAmount,
+            comment = comment
+        )
+
+        val resultIntent = Intent().apply {
+            putExtra(MainActivity.EXTRA_INCOME_DRAFT, draft)
+        }
+
+        setResult(Activity.RESULT_OK, resultIntent)
         finish()
+    }
+
+    private fun normalizeAmount(value: String): String? {
+        val cleaned = value
+            .replace(" ", "")
+            .replace(",", ".")
+
+        val parsed = cleaned.toDoubleOrNull() ?: return null
+        if (parsed < 0.0) return null
+
+        return cleaned
     }
 }

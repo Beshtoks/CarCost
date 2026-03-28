@@ -15,7 +15,7 @@ class ExpenseTypeActivity : AppCompatActivity() {
     private val expenseFormLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                setResult(RESULT_OK)
+                setResult(RESULT_OK, result.data)
                 finish()
             }
         }

@@ -1,6 +1,7 @@
 package com.carcost.app
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.InputType
 import android.widget.Button
@@ -12,30 +13,108 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.text.NumberFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var storage: AppStorage
 
     private lateinit var cardTopMileage: LinearLayout
     private lateinit var cardTopFuel: LinearLayout
 
     private lateinit var tvMileageValue: TextView
     private lateinit var tvFuelValue: TextView
+    private lateinit var tvTopIncomeValue: TextView
+
+    private lateinit var tvIncomeMonthValue: TextView
+    private lateinit var tvIncomeYearValue: TextView
+    private lateinit var tvExpenseMonthValue: TextView
+    private lateinit var tvExpenseYearValue: TextView
+
+    private lateinit var containerSoonByDate: LinearLayout
+    private lateinit var containerSoonByMileage: LinearLayout
 
     private lateinit var btnAddIncome: Button
     private lateinit var btnAddExpense: Button
 
+    private val incomeDrafts = mutableListOf<IncomeDraft>()
+    private val documentationExpenseDrafts = mutableListOf<DocumentationExpenseDraft>()
+    private val techniqueExpenseDrafts = mutableListOf<TechniqueExpenseDraft>()
+
     private val incomeLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                Toast.makeText(this, R.string.message_income_saved, Toast.LENGTH_SHORT).show()
+                val incomeDraft =
+                    result.data?.getSerializableExtra(EXTRA_INCOME_DRAFT) as? IncomeDraft
+
+                if (incomeDraft != null) {
+                    incomeDrafts.add(incomeDraft)
+                    storage.saveIncomeDrafts(incomeDrafts)
+                    updateIncomeValues()
+                    updateTopSalaryValue()
+
+                    Toast.makeText(
+                        this,
+                        getString(
+                            R.string.message_income_saved_with_amount,
+                            incomeDraft.amount,
+                            incomeDrafts.size.toString()
+                        ),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
 
     private val expenseLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                Toast.makeText(this, R.string.message_expense_saved, Toast.LENGTH_SHORT).show()
+                val documentationDraft =
+                    result.data?.getSerializableExtra(EXTRA_DOCUMENTATION_DRAFT) as? DocumentationExpenseDraft
+                val techniqueDraft =
+                    result.data?.getSerializableExtra(EXTRA_TECHNIQUE_DRAFT) as? TechniqueExpenseDraft
+
+                when {
+                    documentationDraft != null -> {
+                        documentationExpenseDrafts.add(documentationDraft)
+                        storage.saveDocumentationDrafts(documentationExpenseDrafts)
+                        updateExpenseValues()
+                        updateSoonDateValues()
+                        updateTopSalaryValue()
+
+                        Toast.makeText(
+                            this,
+                            getString(
+                                R.string.message_documentation_saved_with_amount,
+                                documentationDraft.amount,
+                                documentationExpenseDrafts.size.toString()
+                            ),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    techniqueDraft != null -> {
+                        techniqueExpenseDrafts.add(techniqueDraft)
+                        storage.saveTechniqueDrafts(techniqueExpenseDrafts)
+                        updateExpenseValues()
+                        updateSoonMileageValues()
+                        updateTopSalaryValue()
+
+                        Toast.makeText(
+                            this,
+                            getString(
+                                R.string.message_technique_saved_with_amount,
+                                techniqueDraft.amount,
+                                techniqueExpenseDrafts.size.toString()
+                            ),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             }
         }
 
@@ -43,17 +122,35 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        storage = AppStorage(this)
+
         cardTopMileage = findViewById(R.id.cardTopMileage)
         cardTopFuel = findViewById(R.id.cardTopFuel)
 
         tvMileageValue = findViewById(R.id.tvMileageValue)
         tvFuelValue = findViewById(R.id.tvFuelValue)
+        tvTopIncomeValue = findViewById(R.id.tvTopIncomeValue)
+
+        tvIncomeMonthValue = findViewById(R.id.tvIncomeMonthValue)
+        tvIncomeYearValue = findViewById(R.id.tvIncomeYearValue)
+        tvExpenseMonthValue = findViewById(R.id.tvExpenseMonthValue)
+        tvExpenseYearValue = findViewById(R.id.tvExpenseYearValue)
+
+        containerSoonByDate = findViewById(R.id.containerSoonByDate)
+        containerSoonByMileage = findViewById(R.id.containerSoonByMileage)
 
         btnAddIncome = findViewById(R.id.btnAddIncome)
         btnAddExpense = findViewById(R.id.btnAddExpense)
 
+        loadStoredData()
+
         cardTopMileage.setOnClickListener {
             showMileageInputDialog()
+        }
+
+        cardTopMileage.setOnLongClickListener {
+            startActivity(Intent(this, MileageRegistryActivity::class.java))
+            true
         }
 
         cardTopFuel.setOnClickListener {
@@ -67,6 +164,297 @@ class MainActivity : AppCompatActivity() {
         btnAddExpense.setOnClickListener {
             expenseLauncher.launch(Intent(this, ExpenseTypeActivity::class.java))
         }
+
+        updateIncomeValues()
+        updateExpenseValues()
+        updateSoonDateValues()
+        updateSoonMileageValues()
+        updateTopSalaryValue()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateSoonMileageValues()
+    }
+
+    private fun loadStoredData() {
+        incomeDrafts.clear()
+        incomeDrafts.addAll(storage.loadIncomeDrafts())
+
+        documentationExpenseDrafts.clear()
+        documentationExpenseDrafts.addAll(storage.loadDocumentationDrafts())
+
+        techniqueExpenseDrafts.clear()
+        techniqueExpenseDrafts.addAll(storage.loadTechniqueDrafts())
+
+        storage.loadMileage()?.let { rawMileage ->
+            rawMileage.toLongOrNull()?.let { mileage ->
+                tvMileageValue.text = formatMileage(mileage)
+            }
+        }
+
+        storage.loadFuelPrice()?.let { fuel ->
+            if (fuel.isNotBlank()) {
+                tvFuelValue.text = getString(R.string.fuel_value_format, fuel)
+            }
+        }
+    }
+
+    private fun updateIncomeValues() {
+        val today = LocalDate.now()
+
+        val monthTotal = incomeDrafts
+            .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
+            .sumOf { parseAmount(it.amount) }
+
+        val yearTotal = incomeDrafts
+            .filter { parseDraftDate(it.date)?.year == today.year }
+            .sumOf { parseAmount(it.amount) }
+
+        tvIncomeMonthValue.text = formatMoney(monthTotal)
+        tvIncomeYearValue.text = formatMoney(yearTotal)
+    }
+
+    private fun updateExpenseValues() {
+        val today = LocalDate.now()
+
+        val documentationMonth = documentationExpenseDrafts
+            .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
+            .sumOf { parseAmount(it.amount) }
+
+        val documentationYear = documentationExpenseDrafts
+            .filter { parseDraftDate(it.date)?.year == today.year }
+            .sumOf { parseAmount(it.amount) }
+
+        val techniqueMonth = techniqueExpenseDrafts
+            .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
+            .sumOf { parseAmount(it.amount) }
+
+        val techniqueYear = techniqueExpenseDrafts
+            .filter { parseDraftDate(it.date)?.year == today.year }
+            .sumOf { parseAmount(it.amount) }
+
+        val monthTotal = documentationMonth + techniqueMonth
+        val yearTotal = documentationYear + techniqueYear
+
+        tvExpenseMonthValue.text = formatMoney(monthTotal)
+        tvExpenseYearValue.text = formatMoney(yearTotal)
+    }
+
+    private fun updateTopSalaryValue() {
+        val today = LocalDate.now()
+
+        val incomeMonth = incomeDrafts
+            .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
+            .sumOf { parseAmount(it.amount) }
+
+        val documentationMonth = documentationExpenseDrafts
+            .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
+            .sumOf { parseAmount(it.amount) }
+
+        val techniqueMonth = techniqueExpenseDrafts
+            .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
+            .sumOf { parseAmount(it.amount) }
+
+        val salaryMonth = incomeMonth - documentationMonth - techniqueMonth
+        tvTopIncomeValue.text = formatMoney(salaryMonth)
+    }
+
+    private fun updateSoonDateValues() {
+        containerSoonByDate.removeAllViews()
+
+        val today = LocalDate.now()
+
+        val items = documentationExpenseDrafts
+            .mapNotNull { draft ->
+                val validUntil = draft.validUntil ?: return@mapNotNull null
+                val validDate = parseDraftDate(validUntil) ?: return@mapNotNull null
+
+                SoonDateItem(
+                    title = buildDocumentationTitle(draft),
+                    targetDate = validDate
+                )
+            }
+            .sortedBy { it.targetDate }
+
+        if (items.isEmpty()) {
+            addSoonPlaceholder(containerSoonByDate, getString(R.string.soon_no_data))
+            return
+        }
+
+        items.forEach { item ->
+            val daysLeft = ChronoUnit.DAYS.between(today, item.targetDate).toInt()
+            addSoonRow(
+                container = containerSoonByDate,
+                title = item.title,
+                value = formatRemainingDate(daysLeft)
+            )
+        }
+    }
+
+    private fun updateSoonMileageValues() {
+        containerSoonByMileage.removeAllViews()
+
+        val currentMileage = extractDigits(tvMileageValue.text.toString()).toLongOrNull()
+        if (currentMileage == null) {
+            addSoonPlaceholder(containerSoonByMileage, getString(R.string.soon_no_mileage))
+            return
+        }
+
+        val prefs = getSharedPreferences(MILEAGE_PREFS_NAME, MODE_PRIVATE)
+
+        val items = FIXED_MILEAGE_NODES.mapNotNull { nodeName ->
+            val intervalValue = prefs.getString(makeMileageKey(nodeName), "")?.trim().orEmpty()
+            val interval = intervalValue.toLongOrNull() ?: return@mapNotNull null
+            if (interval <= 0L) return@mapNotNull null
+
+            val latestReplacement = findLatestReplacementForNode(nodeName) ?: return@mapNotNull null
+            val installMileage = latestReplacement.mileage.toLongOrNull() ?: return@mapNotNull null
+
+            val remaining = interval - (currentMileage - installMileage)
+
+            SoonMileageItem(
+                title = nodeName,
+                remainingKm = remaining
+            )
+        }.sortedBy { it.remainingKm }
+
+        if (items.isEmpty()) {
+            addSoonPlaceholder(containerSoonByMileage, getString(R.string.soon_mileage_no_data))
+            return
+        }
+
+        items.forEach { item ->
+            addSoonRow(
+                container = containerSoonByMileage,
+                title = item.title,
+                value = formatRemainingMileage(item.remainingKm)
+            )
+        }
+    }
+
+    private fun findLatestReplacementForNode(nodeName: String): TechniqueExpenseDraft? {
+        return techniqueExpenseDrafts
+            .asSequence()
+            .filter { it.recordType == TECHNIQUE_REPLACEMENT_TYPE }
+            .filter { draft -> draft.titles.any { it.equals(nodeName, ignoreCase = true) } }
+            .mapNotNull { draft ->
+                val date = parseDraftDate(draft.date) ?: return@mapNotNull null
+                TechniqueDraftWithDate(draft, date)
+            }
+            .sortedByDescending { it.date }
+            .map { it.draft }
+            .firstOrNull()
+    }
+
+    private fun buildDocumentationTitle(draft: DocumentationExpenseDraft): String {
+        return when {
+            draft.title.isNotBlank() -> draft.title
+            !draft.subtype.isNullOrBlank() -> "${draft.type}: ${draft.subtype}"
+            else -> draft.type
+        }
+    }
+
+    private fun addSoonPlaceholder(container: LinearLayout, text: String) {
+        val textView = TextView(this).apply {
+            this.text = text
+            textSize = 14f
+            setTextColor(android.graphics.Color.BLACK)
+        }
+        container.addView(textView)
+    }
+
+    private fun addSoonRow(container: LinearLayout, title: String, value: String) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(4), 0, dp(8))
+        }
+
+        val titleView = TextView(this).apply {
+            text = title
+            textSize = 14f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(android.graphics.Color.BLACK)
+        }
+
+        val valueView = TextView(this).apply {
+            text = value
+            textSize = 13f
+            setTextColor(android.graphics.Color.BLACK)
+        }
+
+        row.addView(titleView)
+        row.addView(valueView)
+        container.addView(row)
+    }
+
+    private fun formatRemainingDate(daysLeft: Int): String {
+        if (daysLeft < 0) return getString(R.string.soon_expired)
+        if (daysLeft == 0) return getString(R.string.soon_today)
+
+        if (daysLeft <= 99) {
+            return "$daysLeft ${daysWord(daysLeft)}"
+        }
+
+        if (daysLeft >= 366) {
+            val years = daysLeft / 365
+            return when (years) {
+                1 -> getString(R.string.soon_more_than_year)
+                2 -> getString(R.string.soon_more_than_two_years)
+                3 -> getString(R.string.soon_more_than_three_years)
+                else -> getString(R.string.soon_more_than_years, years.toString())
+            }
+        }
+
+        val months = (daysLeft / 30).coerceIn(4, 11)
+        return getString(R.string.soon_more_than_months, months.toString())
+    }
+
+    private fun formatRemainingMileage(remainingKm: Long): String {
+        return when {
+            remainingKm < 0L -> "Просрочено на ${formatKmValue(-remainingKm)} км"
+            remainingKm == 0L -> "Сейчас"
+            else -> "Осталось ${formatKmValue(remainingKm)} км"
+        }
+    }
+
+    private fun formatKmValue(value: Long): String {
+        val formatter = NumberFormat.getInstance(Locale("ru"))
+        return formatter.format(value)
+    }
+
+    private fun daysWord(value: Int): String {
+        val rem10 = value % 10
+        val rem100 = value % 100
+        return when {
+            rem100 in 11..14 -> "дней"
+            rem10 == 1 -> "день"
+            rem10 in 2..4 -> "дня"
+            else -> "дней"
+        }
+    }
+
+    private fun isSameMonth(first: LocalDate, second: LocalDate): Boolean {
+        return first.year == second.year && first.monthValue == second.monthValue
+    }
+
+    private fun parseDraftDate(value: String): LocalDate? {
+        return try {
+            LocalDate.parse(value, DATE_FORMATTER)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun parseAmount(value: String): Double {
+        return value.replace(",", ".").toDoubleOrNull() ?: 0.0
+    }
+
+    private fun formatMoney(value: Double): String {
+        val formatter = NumberFormat.getNumberInstance(Locale("ru"))
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        return "${formatter.format(value)} €"
     }
 
     private fun showMileageInputDialog() {
@@ -84,6 +472,8 @@ class MainActivity : AppCompatActivity() {
                 if (value.isNotEmpty()) {
                     val number = value.toLong()
                     tvMileageValue.text = formatMileage(number)
+                    storage.saveMileage(number.toString())
+                    updateSoonMileageValues()
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
@@ -107,6 +497,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (value.isNotEmpty()) {
                     tvFuelValue.text = getString(R.string.fuel_value_format, value)
+                    storage.saveFuelPrice(value)
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
@@ -125,4 +516,51 @@ class MainActivity : AppCompatActivity() {
         val formatter = NumberFormat.getInstance(Locale("ru"))
         return getString(R.string.mileage_value_format, formatter.format(value))
     }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
+
+    private fun makeMileageKey(nodeName: String): String {
+        return "interval_$nodeName"
+    }
+
+    companion object {
+        const val EXTRA_INCOME_DRAFT = "extra_income_draft"
+        const val EXTRA_DOCUMENTATION_DRAFT = "extra_documentation_draft"
+        const val EXTRA_TECHNIQUE_DRAFT = "extra_technique_draft"
+
+        private const val MILEAGE_PREFS_NAME = "mileage_registry_prefs"
+        private const val TECHNIQUE_REPLACEMENT_TYPE = "Установка / замена"
+
+        private val DATE_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("dd.MM.uuuu")
+                .withResolverStyle(ResolverStyle.STRICT)
+
+        private val FIXED_MILEAGE_NODES = listOf(
+            "Масло",
+            "Масляный фильтр",
+            "Воздушный фильтр",
+            "Салонный фильтр",
+            "Топливный фильтр",
+            "Передние колодки",
+            "Задние колодки",
+            "Привод ГРМ"
+        )
+    }
+
+    private data class SoonDateItem(
+        val title: String,
+        val targetDate: LocalDate
+    )
+
+    private data class SoonMileageItem(
+        val title: String,
+        val remainingKm: Long
+    )
+
+    private data class TechniqueDraftWithDate(
+        val draft: TechniqueExpenseDraft,
+        val date: LocalDate
+    )
 }

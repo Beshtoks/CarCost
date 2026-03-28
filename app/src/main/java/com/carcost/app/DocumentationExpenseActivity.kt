@@ -1,6 +1,7 @@
 package com.carcost.app
 
 import android.app.Activity
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -11,6 +12,8 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Calendar
+import java.util.Locale
 
 class DocumentationExpenseActivity : AppCompatActivity() {
 
@@ -44,7 +47,15 @@ class DocumentationExpenseActivity : AppCompatActivity() {
         btnDocumentationSave = findViewById(R.id.btnDocumentationSave)
         btnDocumentationCancel = findViewById(R.id.btnDocumentationCancel)
 
+        etDocumentTitle.hint = null
+        etDocumentDate.hint = null
+        etDocumentValidUntil.hint = null
+        etDocumentAmount.hint = null
+        etDocumentComment.hint = null
+
         setupDocumentTypeSpinner()
+        setupDateField(etDocumentDate)
+        setupDateField(etDocumentValidUntil)
         updateSubtypeVisibility()
 
         btnDocumentationSave.setOnClickListener {
@@ -105,16 +116,108 @@ class DocumentationExpenseActivity : AppCompatActivity() {
         spinnerDocumentSubtype.adapter = subtypeAdapter
     }
 
-    private fun saveDocumentation() {
-        val date = etDocumentDate.text.toString().trim()
-        val amount = etDocumentAmount.text.toString().trim()
+    private fun setupDateField(editText: EditText) {
+        editText.keyListener = null
+        editText.isFocusable = false
+        editText.isClickable = true
 
-        if (date.isEmpty() || amount.isEmpty()) {
+        editText.setOnClickListener {
+            showDatePicker(editText)
+        }
+    }
+
+    private fun showDatePicker(target: EditText) {
+        val calendar = parseDateOrToday(target.text.toString().trim())
+
+        val dialog = DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                target.setText(
+                    String.format(
+                        Locale.getDefault(),
+                        "%02d.%02d.%04d",
+                        dayOfMonth,
+                        month + 1,
+                        year
+                    )
+                )
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+
+        dialog.show()
+    }
+
+    private fun parseDateOrToday(value: String): Calendar {
+        val calendar = Calendar.getInstance()
+        val parts = value.split(".")
+
+        if (parts.size == 3) {
+            val day = parts[0].toIntOrNull()
+            val month = parts[1].toIntOrNull()
+            val year = parts[2].toIntOrNull()
+
+            if (day != null && month != null && year != null) {
+                calendar.set(year, month - 1, day)
+            }
+        }
+
+        return calendar
+    }
+
+    private fun saveDocumentation() {
+        val type = spinnerDocumentType.selectedItem?.toString().orEmpty()
+        val subtype = if (subtypeContainer.visibility == View.VISIBLE) {
+            spinnerDocumentSubtype.selectedItem?.toString()
+        } else {
+            null
+        }
+
+        val title = etDocumentTitle.text.toString().trim()
+        val date = etDocumentDate.text.toString().trim()
+        val validUntilRaw = etDocumentValidUntil.text.toString().trim()
+        val rawAmount = etDocumentAmount.text.toString().trim()
+        val comment = etDocumentComment.text.toString().trim()
+
+        if (date.isEmpty() || rawAmount.isEmpty()) {
             Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
             return
         }
 
-        setResult(Activity.RESULT_OK, Intent())
+        val normalizedAmount = normalizeAmount(rawAmount)
+        if (normalizedAmount == null) {
+            Toast.makeText(this, R.string.message_invalid_amount, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val draft = DocumentationExpenseDraft(
+            type = type,
+            subtype = subtype,
+            title = title,
+            date = date,
+            validUntil = validUntilRaw.ifEmpty { null },
+            amount = normalizedAmount,
+            comment = comment
+        )
+
+        val resultIntent = Intent().apply {
+            putExtra(MainActivity.EXTRA_DOCUMENTATION_DRAFT, draft)
+        }
+
+        setResult(Activity.RESULT_OK, resultIntent)
         finish()
+    }
+
+    private fun normalizeAmount(value: String): String? {
+        val cleaned = value
+            .replace(" ", "")
+            .replace(",", ".")
+
+        val parsed = cleaned.toDoubleOrNull() ?: return null
+        if (parsed < 0.0) return null
+
+        return cleaned
     }
 }
