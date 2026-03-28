@@ -21,4 +21,160 @@
 
     <string name="add_income">+ Доход</string>
     <string name="add_expense">+ Расход</string>
+
+    <string name="dialog_title_mileage">Введите пробег</string>
+    <string name="dialog_title_fuel_price">Введите цену топлива</string>
+    <string name="dialog_ok">ОК</string>
+    <string name="dialog_cancel">Отмена</string>
+
+    <string name="mileage_value_format">%1$s км</string>
+    <string name="fuel_value_format">%1$s €</string>
+
+    <string name="screen_income_title">Доход</string>
+    <string name="screen_expense_type_title">Выбор типа расхода</string>
+    <string name="screen_documentation_title">Расход — Документация</string>
+    <string name="screen_technique_title">Расход — Техника</string>
+
+    <string name="field_income_type">Тип дохода</string>
+    <string name="field_income_subtype">Подтип</string>
+    <string name="field_document_type">Тип документа</string>
+    <string name="field_document_subtype">Подтип / вид</string>
+    <string name="field_name">Название</string>
+    <string name="field_date">Дата</string>
+    <string name="field_valid_until_optional">Годен до (необязательно)</string>
+    <string name="field_amount">Сумма</string>
+    <string name="field_comment">Комментарий</string>
+    <string name="field_record_type">Тип записи</string>
+    <string name="field_mileage">Пробег</string>
+    <string name="field_quantity">Количество</string>
+
+    <string name="hint_income_title">Например: Bolt за смену</string>
+    <string name="hint_document_name">Например: Лицензия Рига</string>
+    <string name="hint_date">Например: 28.03.2026</string>
+    <string name="hint_amount">Например: 25.50</string>
+    <string name="hint_comment">Комментарий</string>
+    <string name="hint_mileage">Например: 76006</string>
+    <string name="hint_quantity">Например: 1</string>
+    <string name="hint_technique_title">Например: Масло</string>
+
+    <string name="action_save">Сохранить</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_back">Назад</string>
+
+    <string name="expense_type_technique">Техника</string>
+    <string name="expense_type_documentation">Документация</string>
+
+    <string name="message_save_not_implemented">Сохранение пока не реализовано</string>
+    <string name="add_title_row">Добавить ещё одну строку названия</string>
+
+    <string-array name="income_types">
+        <item>Агрегаторы</item>
+        <item>Терминал</item>
+        <item>Наличные</item>
+        <item>Переводы</item>
+        <item>Прочее</item>
+        <item>Финансирование</item>
+    </string-array>
+
+    <string-array name="income_subtypes_aggregators">
+        <item>Bolt</item>
+    </string-array>
+
+    <string-array name="income_subtypes_transfers">
+        <item>Частное лицо</item>
+        <item>Компания</item>
+    </string-array>
+
+    <string-array name="documentation_types">
+        <item>Лицензия</item>
+        <item>Налоги</item>
+        <item>Банковские расходы</item>
+        <item>Бухгалтерия</item>
+        <item>Разрешения / удостоверения</item>
+        <item>Страхование</item>
+        <item>Парковки</item>
+        <item>Сервисы / подписки</item>
+        <item>Штрафы</item>
+        <item>Пропуски</item>
+        <item>Кредит / финансирование</item>
+        <item>Прочее</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_license">
+        <item>Компания</item>
+        <item>Рига</item>
+        <item>Межгород (Латвия)</item>
+        <item>Юрмала</item>
+        <item>Другое</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_taxes">
+        <item>Социальный</item>
+        <item>Дорожный</item>
+        <item>Транспортная дирекция</item>
+        <item>Налоговый депозит</item>
+        <item>Другое</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_banking">
+        <item>Обслуживание счёта</item>
+        <item>Комиссии</item>
+        <item>Переводы</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_accounting">
+        <item>Ежемесячное обслуживание</item>
+        <item>Годовой отчёт</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_permissions">
+        <item>Медкомиссия</item>
+        <item>Водительские права</item>
+        <item>Удостоверение водителя такси</item>
+        <item>Прочие документы</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_insurance">
+        <item>OCTA / ОСАГО</item>
+        <item>КАСКО</item>
+        <item>Прочее</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_parking">
+        <item>Mobilly</item>
+        <item>Платная стоянка / абонемент</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_services">
+        <item>GPS (GSM APSARDZE SIA)</item>
+        <item>Прочие сервисы</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_fines">
+        <item>Парковка</item>
+        <item>ПДД</item>
+        <item>Авария</item>
+        <item>Прочее</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_passes">
+        <item>Юрмала</item>
+        <item>Прочее</item>
+    </string-array>
+
+    <string-array name="documentation_subtypes_credit">
+        <item>Платёж по кредиту</item>
+        <item>Погашение</item>
+        <item>Прочее</item>
+    </string-array>
+
+    <string-array name="technique_record_types">
+        <item>Покупка</item>
+        <item>Установка / замена</item>
+    </string-array>
+
+    <string-array name="quantity_units">
+        <item>шт</item>
+        <item>л</item>
+    </string-array>
 </resources>
