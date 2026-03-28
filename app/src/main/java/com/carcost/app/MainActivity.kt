@@ -34,6 +34,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvIncomeYearValue: TextView
     private lateinit var tvExpenseMonthValue: TextView
     private lateinit var tvExpenseYearValue: TextView
+    private lateinit var tvCostPerDayValue: TextView
+    private lateinit var tvCostPerKmValue: TextView
 
     private lateinit var containerSoonByDate: LinearLayout
     private lateinit var containerSoonByMileage: LinearLayout
@@ -85,6 +87,7 @@ class MainActivity : AppCompatActivity() {
                         updateExpenseValues()
                         updateSoonDateValues()
                         updateTopSalaryValue()
+                        updateCostValues()
 
                         Toast.makeText(
                             this,
@@ -100,9 +103,11 @@ class MainActivity : AppCompatActivity() {
                     techniqueDraft != null -> {
                         techniqueExpenseDrafts.add(techniqueDraft)
                         storage.saveTechniqueDrafts(techniqueExpenseDrafts)
+                        updateAutoStartMileage()
                         updateExpenseValues()
                         updateSoonMileageValues()
                         updateTopSalaryValue()
+                        updateCostValues()
 
                         Toast.makeText(
                             this,
@@ -135,6 +140,8 @@ class MainActivity : AppCompatActivity() {
         tvIncomeYearValue = findViewById(R.id.tvIncomeYearValue)
         tvExpenseMonthValue = findViewById(R.id.tvExpenseMonthValue)
         tvExpenseYearValue = findViewById(R.id.tvExpenseYearValue)
+        tvCostPerDayValue = findViewById(R.id.tvCostPerDayValue)
+        tvCostPerKmValue = findViewById(R.id.tvCostPerKmValue)
 
         containerSoonByDate = findViewById(R.id.containerSoonByDate)
         containerSoonByMileage = findViewById(R.id.containerSoonByMileage)
@@ -143,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         btnAddExpense = findViewById(R.id.btnAddExpense)
 
         loadStoredData()
+        updateAutoStartMileage()
 
         cardTopMileage.setOnClickListener {
             showMileageInputDialog()
@@ -170,11 +178,13 @@ class MainActivity : AppCompatActivity() {
         updateSoonDateValues()
         updateSoonMileageValues()
         updateTopSalaryValue()
+        updateCostValues()
     }
 
     override fun onResume() {
         super.onResume()
         updateSoonMileageValues()
+        updateCostValues()
     }
 
     private fun loadStoredData() {
@@ -197,6 +207,24 @@ class MainActivity : AppCompatActivity() {
             if (fuel.isNotBlank()) {
                 tvFuelValue.text = getString(R.string.fuel_value_format, fuel)
             }
+        }
+    }
+
+    private fun updateAutoStartMileage() {
+        val earliestMileage = techniqueExpenseDrafts
+            .asSequence()
+            .mapNotNull { draft ->
+                val mileage = draft.mileage.trim().toLongOrNull() ?: return@mapNotNull null
+                val date = parseDraftDate(draft.date) ?: return@mapNotNull null
+                TechniqueStartMileageCandidate(date = date, mileage = mileage)
+            }
+            .sortedWith(compareBy<TechniqueStartMileageCandidate> { it.date }.thenBy { it.mileage })
+            .firstOrNull()
+
+        if (earliestMileage != null) {
+            storage.saveStartMileage(earliestMileage.mileage.toString())
+        } else {
+            storage.clearStartMileage()
         }
     }
 
@@ -258,6 +286,65 @@ class MainActivity : AppCompatActivity() {
 
         val salaryMonth = incomeMonth - documentationMonth - techniqueMonth
         tvTopIncomeValue.text = formatMoney(salaryMonth)
+    }
+
+    private fun updateCostValues() {
+        val allExpenses = buildAllExpenseItems()
+
+        if (allExpenses.isEmpty()) {
+            tvCostPerDayValue.text = getString(R.string.cost_no_data)
+            tvCostPerKmValue.text = getString(R.string.cost_no_data)
+            return
+        }
+
+        val today = LocalDate.now()
+        val earliestExpenseDate = allExpenses.minOf { it.date }
+        val totalDaysFromStart = ChronoUnit.DAYS.between(earliestExpenseDate, today).toInt().coerceAtLeast(1)
+
+        val useRollingYear = totalDaysFromStart >= 365
+        val windowStartDate = if (useRollingYear) today.minusDays(365) else earliestExpenseDate
+
+        val filteredExpenses = allExpenses.filter { !it.date.isBefore(windowStartDate) }
+        val totalExpenseAmount = filteredExpenses.sumOf { it.amount }
+        val divisorDays = if (useRollingYear) 365 else totalDaysFromStart.coerceAtLeast(1)
+
+        val costPerDay = totalExpenseAmount / divisorDays.toDouble()
+        tvCostPerDayValue.text = "${formatMoney(costPerDay)} / сутки"
+
+        val currentMileage = extractDigits(tvMileageValue.text.toString()).toLongOrNull()
+        val startMileage = storage.loadStartMileage()?.toLongOrNull()
+
+        if (currentMileage == null || startMileage == null || currentMileage <= startMileage) {
+            tvCostPerKmValue.text = getString(R.string.cost_no_data)
+            return
+        }
+
+        val mileageDelta = currentMileage - startMileage
+        if (mileageDelta <= 0L) {
+            tvCostPerKmValue.text = getString(R.string.cost_no_data)
+            return
+        }
+
+        val costPerKm = totalExpenseAmount / mileageDelta.toDouble()
+        tvCostPerKmValue.text = "${formatMoney(costPerKm)} / км"
+    }
+
+    private fun buildAllExpenseItems(): List<ExpenseItem> {
+        val result = mutableListOf<ExpenseItem>()
+
+        documentationExpenseDrafts.forEach { draft ->
+            val date = parseDraftDate(draft.date) ?: return@forEach
+            val amount = parseAmount(draft.amount)
+            result.add(ExpenseItem(date = date, amount = amount))
+        }
+
+        techniqueExpenseDrafts.forEach { draft ->
+            val date = parseDraftDate(draft.date) ?: return@forEach
+            val amount = parseAmount(draft.amount)
+            result.add(ExpenseItem(date = date, amount = amount))
+        }
+
+        return result
     }
 
     private fun updateSoonDateValues() {
@@ -474,6 +561,7 @@ class MainActivity : AppCompatActivity() {
                     tvMileageValue.text = formatMileage(number)
                     storage.saveMileage(number.toString())
                     updateSoonMileageValues()
+                    updateCostValues()
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
@@ -562,5 +650,15 @@ class MainActivity : AppCompatActivity() {
     private data class TechniqueDraftWithDate(
         val draft: TechniqueExpenseDraft,
         val date: LocalDate
+    )
+
+    private data class TechniqueStartMileageCandidate(
+        val date: LocalDate,
+        val mileage: Long
+    )
+
+    private data class ExpenseItem(
+        val date: LocalDate,
+        val amount: Double
     )
 }

@@ -24,6 +24,18 @@ class AppStorage(context: Context) {
         return prefs.getString(KEY_FUEL_PRICE, null)
     }
 
+    fun saveStartMileage(value: String) {
+        prefs.edit().putString(KEY_START_MILEAGE, value).apply()
+    }
+
+    fun loadStartMileage(): String? {
+        return prefs.getString(KEY_START_MILEAGE, null)
+    }
+
+    fun clearStartMileage() {
+        prefs.edit().remove(KEY_START_MILEAGE).apply()
+    }
+
     fun saveIncomeDrafts(items: List<IncomeDraft>) {
         val array = JSONArray()
         items.forEach { draft ->
@@ -167,6 +179,7 @@ class AppStorage(context: Context) {
 
         private const val KEY_MILEAGE = "key_mileage"
         private const val KEY_FUEL_PRICE = "key_fuel_price"
+        private const val KEY_START_MILEAGE = "key_start_mileage"
         private const val KEY_INCOME_DRAFTS = "key_income_drafts"
         private const val KEY_DOCUMENTATION_DRAFTS = "key_documentation_drafts"
         private const val KEY_TECHNIQUE_DRAFTS = "key_technique_drafts"
