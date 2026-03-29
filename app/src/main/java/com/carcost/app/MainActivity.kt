@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardTopFuel: LinearLayout
     private lateinit var cardIncome: LinearLayout
     private lateinit var cardCost: LinearLayout
+    private lateinit var cardExpense: LinearLayout
 
     private lateinit var tvMileageValue: TextView
     private lateinit var tvFuelValue: TextView
@@ -157,6 +158,7 @@ class MainActivity : AppCompatActivity() {
         cardTopFuel = findViewById(R.id.cardTopFuel)
         cardIncome = findViewById(R.id.cardIncome)
         cardCost = findViewById(R.id.cardCost)
+        cardExpense = findViewById(R.id.cardExpense)
 
         tvMileageValue = findViewById(R.id.tvMileageValue)
         tvFuelValue = findViewById(R.id.tvFuelValue)
@@ -193,6 +195,11 @@ class MainActivity : AppCompatActivity() {
 
         cardIncome.setOnLongClickListener {
             startActivity(Intent(this, JournalActivity::class.java))
+            true
+        }
+
+        cardExpense.setOnLongClickListener {
+            startActivity(Intent(this, CostAnalysisActivity::class.java))
             true
         }
 
@@ -428,35 +435,41 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateCostValues() {
-        val odometerPoints = buildOdometerPoints()
-        if (odometerPoints.size < 2) {
+        val today = LocalDate.now()
+        val fromDate = today.minusDays(365)
+
+        val allOdometerPoints = buildOdometerPoints()
+        if (allOdometerPoints.size < 2) {
             tvCostPerDayValue.text = getString(R.string.cost_no_data)
             tvCostPerKmValue.text = getString(R.string.cost_no_data)
             return
         }
 
-        val segments = buildMileageSegments(odometerPoints)
-        if (segments.isEmpty()) {
+        val windowSegments = buildWindowMileageSegments(
+            points = allOdometerPoints,
+            fromDate = fromDate,
+            toDate = today
+        )
+
+        if (windowSegments.isEmpty()) {
             tvCostPerDayValue.text = getString(R.string.cost_no_data)
             tvCostPerKmValue.text = getString(R.string.cost_no_data)
             return
         }
 
-        val averageDailyMileage = segments.map { it.dailyMileage }.average()
+        val averageDailyMileage = windowSegments.map { it.dailyMileage }.average()
         if (averageDailyMileage <= 0.0) {
             tvCostPerDayValue.text = getString(R.string.cost_no_data)
             tvCostPerKmValue.text = getString(R.string.cost_no_data)
             return
         }
 
-        val firstPointDate = odometerPoints.first().date
-        val lastPointDate = odometerPoints.last().date
-        val periodDays = ChronoUnit.DAYS.between(firstPointDate, lastPointDate).toInt().coerceAtLeast(1)
+        val periodDays = ChronoUnit.DAYS.between(fromDate, today).toInt().coerceAtLeast(1)
 
-        val nonFuelExpenses = buildNonFuelExpenseItems(firstPointDate, lastPointDate)
+        val nonFuelExpenses = buildNonFuelExpenseItems(fromDate, today)
         val nonFuelDailyCost = nonFuelExpenses.sumOf { it.amount } / periodDays.toDouble()
 
-        val averageFuelConsumptionPer100 = buildAverageFuelConsumptionPer100(segments)
+        val averageFuelConsumptionPer100 = buildAverageFuelConsumptionPer100(windowSegments)
         val currentFuelPrice = storage.loadFuelPrice()?.replace(',', '.')?.toDoubleOrNull() ?: 0.0
         val fuelCostPerKm = if (averageFuelConsumptionPer100 != null && currentFuelPrice > 0.0) {
             (averageFuelConsumptionPer100 / 100.0) * currentFuelPrice
@@ -501,30 +514,45 @@ class MainActivity : AppCompatActivity() {
             .sortedWith(compareBy<OdometerPoint> { it.date }.thenBy { it.mileage })
     }
 
-    private fun buildMileageSegments(points: List<OdometerPoint>): List<MileageSegment> {
+    private fun buildWindowMileageSegments(
+        points: List<OdometerPoint>,
+        fromDate: LocalDate,
+        toDate: LocalDate
+    ): List<WindowMileageSegment> {
         if (points.size < 2) return emptyList()
 
-        val segments = mutableListOf<MileageSegment>()
+        val result = mutableListOf<WindowMileageSegment>()
+
         for (i in 0 until points.lastIndex) {
             val start = points[i]
             val end = points[i + 1]
-            val days = ChronoUnit.DAYS.between(start.date, end.date).toInt()
-            val kmDelta = end.mileage - start.mileage
 
-            if (days <= 0 || kmDelta <= 0L) continue
+            val totalDays = ChronoUnit.DAYS.between(start.date, end.date).toInt()
+            val totalMileage = end.mileage - start.mileage
 
-            segments.add(
-                MileageSegment(
-                    startDate = start.date,
-                    endDate = end.date,
-                    mileageDelta = kmDelta,
-                    days = days,
-                    dailyMileage = kmDelta.toDouble() / days.toDouble()
+            if (totalDays <= 0 || totalMileage <= 0L) continue
+
+            val overlapStart = if (start.date.isBefore(fromDate)) fromDate else start.date
+            val overlapEnd = if (end.date.isAfter(toDate)) toDate else end.date
+
+            val overlapDays = ChronoUnit.DAYS.between(overlapStart, overlapEnd).toInt()
+            if (overlapDays <= 0) continue
+
+            val dailyMileage = totalMileage.toDouble() / totalDays.toDouble()
+            val overlapMileage = dailyMileage * overlapDays.toDouble()
+
+            result.add(
+                WindowMileageSegment(
+                    startDate = overlapStart,
+                    endDate = overlapEnd,
+                    mileageDelta = overlapMileage,
+                    days = overlapDays,
+                    dailyMileage = dailyMileage
                 )
             )
         }
 
-        return segments
+        return result
     }
 
     private fun buildNonFuelExpenseItems(
@@ -551,7 +579,7 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
-    private fun buildAverageFuelConsumptionPer100(segments: List<MileageSegment>): Double? {
+    private fun buildAverageFuelConsumptionPer100(segments: List<WindowMileageSegment>): Double? {
         val consumptions = segments.mapNotNull { segment ->
             val liters = techniqueExpenseDrafts
                 .asSequence()
@@ -562,10 +590,10 @@ class MainActivity : AppCompatActivity() {
                 }
                 .sumOf { parseQuantity(it.quantity) }
 
-            if (liters <= 0.0 || segment.mileageDelta <= 0L) {
+            if (liters <= 0.0 || segment.mileageDelta <= 0.0) {
                 null
             } else {
-                (liters / segment.mileageDelta.toDouble()) * 100.0
+                (liters / segment.mileageDelta) * 100.0
             }
         }
 
@@ -1037,10 +1065,10 @@ class MainActivity : AppCompatActivity() {
         val mileage: Long
     )
 
-    private data class MileageSegment(
+    private data class WindowMileageSegment(
         val startDate: LocalDate,
         val endDate: LocalDate,
-        val mileageDelta: Long,
+        val mileageDelta: Double,
         val days: Int,
         val dailyMileage: Double
     )

@@ -10,6 +10,12 @@
         android:theme="@style/Theme.CarCost">
 
         <activity
+            android:name=".CostAnalysisActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+
+        <activity
             android:name=".BankImportActivity"
             android:exported="false"
             android:screenOrientation="portrait"
