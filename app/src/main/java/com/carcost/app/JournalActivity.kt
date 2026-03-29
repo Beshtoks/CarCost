@@ -65,7 +65,10 @@ class JournalActivity : AppCompatActivity() {
                 JournalListItem(
                     date = date,
                     typeCode = getString(R.string.journal_type_income_short),
-                    shortTitle = draft.title.ifBlank { draft.type },
+                    shortTitle = buildJournalRowTitle(
+                        type = draft.type,
+                        title = draft.title
+                    ),
                     amount = draft.amount,
                     details = buildIncomeDetails(draft),
                     editAction = {
@@ -103,7 +106,10 @@ class JournalActivity : AppCompatActivity() {
                 JournalListItem(
                     date = date,
                     typeCode = getString(R.string.journal_type_documentation_short),
-                    shortTitle = draft.title.ifBlank { draft.type },
+                    shortTitle = buildJournalRowTitle(
+                        type = draft.type,
+                        title = draft.title
+                    ),
                     amount = draft.amount,
                     details = buildDocumentationDetails(draft),
                     editAction = {
@@ -143,7 +149,10 @@ class JournalActivity : AppCompatActivity() {
                 JournalListItem(
                     date = date,
                     typeCode = getString(R.string.journal_type_technique_short),
-                    shortTitle = draft.titles.firstOrNull().orEmpty().ifBlank { draft.recordType },
+                    shortTitle = buildJournalRowTitle(
+                        type = draft.recordType,
+                        title = draft.titles.firstOrNull().orEmpty()
+                    ),
                     amount = draft.amount,
                     details = buildTechniqueDetails(draft),
                     editAction = {
@@ -225,6 +234,17 @@ class JournalActivity : AppCompatActivity() {
 
     private fun formatDialogTitle(item: JournalListItem): String {
         return "${item.displayDate}  ${item.typeCode}"
+    }
+
+    private fun buildJournalRowTitle(type: String, title: String): String {
+        val cleanType = type.trim()
+        val cleanTitle = title.trim()
+
+        if (cleanType.isBlank() && cleanTitle.isBlank()) return "—"
+        if (cleanType.isBlank()) return cleanTitle
+        if (cleanTitle.isBlank()) return cleanType
+
+        return "$cleanType — $cleanTitle"
     }
 
     private fun buildIncomeDetails(draft: IncomeDraft): String {
