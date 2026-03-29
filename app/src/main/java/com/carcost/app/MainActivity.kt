@@ -2,6 +2,7 @@ package com.carcost.app
 
 import android.content.Intent
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.widget.Button
@@ -12,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import java.io.IOException
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardTopMileage: LinearLayout
     private lateinit var cardTopFuel: LinearLayout
     private lateinit var cardIncome: LinearLayout
+    private lateinit var cardCost: LinearLayout
 
     private lateinit var tvMileageValue: TextView
     private lateinit var tvFuelValue: TextView
@@ -124,6 +127,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val exportBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument(BACKUP_MIME_TYPE)) { uri ->
+            if (uri != null) {
+                exportBackupToUri(uri)
+            }
+        }
+
+    private val importBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+                confirmImportFromUri(uri)
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -133,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         cardTopMileage = findViewById(R.id.cardTopMileage)
         cardTopFuel = findViewById(R.id.cardTopFuel)
         cardIncome = findViewById(R.id.cardIncome)
+        cardCost = findViewById(R.id.cardCost)
 
         tvMileageValue = findViewById(R.id.tvMileageValue)
         tvFuelValue = findViewById(R.id.tvFuelValue)
@@ -172,6 +190,11 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        cardCost.setOnLongClickListener {
+            showBackupMenu()
+            true
+        }
+
         btnAddIncome.setOnClickListener {
             incomeLauncher.launch(Intent(this, IncomeEntryActivity::class.java))
         }
@@ -180,17 +203,16 @@ class MainActivity : AppCompatActivity() {
             expenseLauncher.launch(Intent(this, ExpenseTypeActivity::class.java))
         }
 
-        updateIncomeValues()
-        updateExpenseValues()
-        updateSoonDateValues()
-        updateSoonMileageValues()
-        updateTopSalaryValue()
-        updateCostValues()
+        refreshScreen()
     }
 
     override fun onResume() {
         super.onResume()
         loadStoredData()
+        refreshScreen()
+    }
+
+    private fun refreshScreen() {
         updateAutoStartMileage()
         updateIncomeValues()
         updateExpenseValues()
@@ -210,16 +232,88 @@ class MainActivity : AppCompatActivity() {
         techniqueExpenseDrafts.clear()
         techniqueExpenseDrafts.addAll(storage.loadTechniqueDrafts())
 
-        storage.loadMileage()?.let { rawMileage ->
+        val rawMileage = storage.loadMileage()
+        if (rawMileage.isNullOrBlank()) {
+            tvMileageValue.text = getString(R.string.mileage_value_format, "0")
+        } else {
             rawMileage.toLongOrNull()?.let { mileage ->
                 tvMileageValue.text = formatMileage(mileage)
             }
         }
 
-        storage.loadFuelPrice()?.let { fuel ->
-            if (fuel.isNotBlank()) {
-                tvFuelValue.text = getString(R.string.fuel_value_format, fuel)
+        val fuel = storage.loadFuelPrice()
+        tvFuelValue.text = if (fuel.isNullOrBlank()) {
+            getString(R.string.fuel_value_format, "0")
+        } else {
+            getString(R.string.fuel_value_format, fuel)
+        }
+    }
+
+    private fun showBackupMenu() {
+        val items = arrayOf(
+            "Экспорт базы",
+            "Импорт базы (полная замена)"
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle("Резервная копия базы")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> exportBackupLauncher.launch(buildBackupFileName())
+                    1 -> importBackupLauncher.launch(arrayOf(BACKUP_MIME_TYPE, "text/plain", "*/*"))
+                }
             }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun buildBackupFileName(): String {
+        return "carcost_backup_${LocalDate.now().format(BACKUP_FILE_DATE_FORMATTER)}.json"
+    }
+
+    private fun exportBackupToUri(uri: Uri) {
+        try {
+            val backupJson = storage.exportBackupJson()
+            contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8).use { writer ->
+                if (writer == null) {
+                    throw IOException("Не удалось открыть файл для записи")
+                }
+                writer.write(backupJson)
+            }
+            Toast.makeText(this, "База сохранена", Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Не удалось сохранить базу", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun confirmImportFromUri(uri: Uri) {
+        AlertDialog.Builder(this)
+            .setTitle("Импорт базы")
+            .setMessage("Все текущие данные будут полностью удалены и заменены данными из выбранного файла.")
+            .setPositiveButton("Импорт") { _, _ ->
+                importBackupFromUri(uri)
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun importBackupFromUri(uri: Uri) {
+        try {
+            val backupJson = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8).use { reader ->
+                if (reader == null) {
+                    throw IOException("Не удалось открыть файл для чтения")
+                }
+                reader.readText()
+            }
+
+            storage.importBackupJson(backupJson)
+            loadStoredData()
+            refreshScreen()
+            Toast.makeText(this, "База восстановлена", Toast.LENGTH_SHORT).show()
+        } catch (_: IllegalArgumentException) {
+            Toast.makeText(this, "Файл базы не подходит для этой версии", Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Не удалось восстановить базу", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -633,10 +727,14 @@ class MainActivity : AppCompatActivity() {
 
         private const val MILEAGE_PREFS_NAME = "mileage_registry_prefs"
         private const val TECHNIQUE_REPLACEMENT_TYPE = "Установка / замена"
+        private const val BACKUP_MIME_TYPE = "application/json"
 
         private val DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatter.ofPattern("dd.MM.uuuu")
                 .withResolverStyle(ResolverStyle.STRICT)
+
+        private val BACKUP_FILE_DATE_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyy_MM_dd")
 
         private val FIXED_MILEAGE_NODES = listOf(
             "Масло",

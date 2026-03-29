@@ -58,6 +58,7 @@
     <string name="field_document_subtype">Подтип / вид</string>
     <string name="field_name">Название</string>
     <string name="field_date">Дата</string>
+    <string name="field_odometer_optional">Спидометр (необязательно)</string>
     <string name="field_valid_until_optional">Годен до (необязательно)</string>
     <string name="field_amount">Сумма</string>
     <string name="field_comment">Комментарий</string>
@@ -71,6 +72,7 @@
     <string name="hint_amount">Например: 25.50</string>
     <string name="hint_comment">Комментарий</string>
     <string name="hint_mileage">Например: 76006</string>
+    <string name="hint_odometer">Например: 76006</string>
     <string name="hint_quantity">Например: 1</string>
     <string name="hint_technique_title">Например: Масло</string>
 
@@ -106,6 +108,9 @@
 
     <string-array name="income_subtypes_aggregators">
         <item>Bolt</item>
+        <item>RedCab</item>
+        <item>TaxiLV</item>
+        <item>Forus</item>
     </string-array>
 
     <string-array name="income_subtypes_transfers">

@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="12dp"
+    android:fitsSystemWindows="true">
 
     <TextView
         android:id="@+id/tvJournalTitle"
@@ -28,8 +29,8 @@
         android:id="@+id/lvJournal"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="12dp"
-        android:divider="#33000000"
+        android:layout_marginTop="8dp"
+        android:divider="#22000000"
         android:dividerHeight="1dp" />
 
 </LinearLayout>

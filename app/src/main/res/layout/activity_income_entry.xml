@@ -68,7 +68,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:hint="@string/hint_income_title"
             android:inputType="textCapSentences" />
 
         <TextView
@@ -84,7 +83,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:hint="@string/hint_date"
             android:inputType="date" />
 
         <TextView
@@ -100,7 +98,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:hint="@string/hint_amount"
             android:inputType="numberDecimal" />
 
         <TextView
@@ -117,7 +114,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:gravity="top|start"
-            android:hint="@string/hint_comment"
             android:inputType="textCapSentences|textMultiLine"
             android:minLines="3" />
 

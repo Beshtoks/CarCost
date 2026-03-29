@@ -23,6 +23,7 @@ class DocumentationExpenseActivity : AppCompatActivity() {
 
     private lateinit var etDocumentTitle: EditText
     private lateinit var etDocumentDate: EditText
+    private lateinit var etDocumentOdometer: EditText
     private lateinit var etDocumentValidUntil: EditText
     private lateinit var etDocumentAmount: EditText
     private lateinit var etDocumentComment: EditText
@@ -40,6 +41,7 @@ class DocumentationExpenseActivity : AppCompatActivity() {
 
         etDocumentTitle = findViewById(R.id.etDocumentTitle)
         etDocumentDate = findViewById(R.id.etDocumentDate)
+        etDocumentOdometer = findViewById(R.id.etDocumentOdometer)
         etDocumentValidUntil = findViewById(R.id.etDocumentValidUntil)
         etDocumentAmount = findViewById(R.id.etDocumentAmount)
         etDocumentComment = findViewById(R.id.etDocumentComment)
@@ -49,6 +51,7 @@ class DocumentationExpenseActivity : AppCompatActivity() {
 
         etDocumentTitle.hint = null
         etDocumentDate.hint = null
+        etDocumentOdometer.hint = null
         etDocumentValidUntil.hint = null
         etDocumentAmount.hint = null
         etDocumentComment.hint = null
@@ -177,6 +180,7 @@ class DocumentationExpenseActivity : AppCompatActivity() {
 
         val title = etDocumentTitle.text.toString().trim()
         val date = etDocumentDate.text.toString().trim()
+        val odometer = etDocumentOdometer.text.toString().trim()
         val validUntilRaw = etDocumentValidUntil.text.toString().trim()
         val rawAmount = etDocumentAmount.text.toString().trim()
         val comment = etDocumentComment.text.toString().trim()
@@ -197,6 +201,7 @@ class DocumentationExpenseActivity : AppCompatActivity() {
             subtype = subtype,
             title = title,
             date = date,
+            odometer = odometer,
             validUntil = validUntilRaw.ifEmpty { null },
             amount = normalizedAmount,
             comment = comment

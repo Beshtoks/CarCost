@@ -16,6 +16,7 @@ data class DocumentationExpenseDraft(
     val subtype: String?,
     val title: String,
     val date: String,
+    val odometer: String,
     val validUntil: String?,
     val amount: String,
     val comment: String

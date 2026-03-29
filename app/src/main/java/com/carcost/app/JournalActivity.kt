@@ -12,8 +12,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
+import java.util.Locale
 
 class JournalActivity : AppCompatActivity() {
 
@@ -42,7 +44,9 @@ class JournalActivity : AppCompatActivity() {
 
         lvJournal.setOnItemClickListener { _, _, position, _ ->
             val item = items[position]
-            showEntryDialog(item)
+            if (!item.isHeader) {
+                showEntryDialog(item)
+            }
         }
 
         loadItems()
@@ -56,11 +60,11 @@ class JournalActivity : AppCompatActivity() {
     }
 
     private fun loadItems() {
-        items.clear()
+        val rawItems = mutableListOf<JournalListItem>()
 
         storage.loadIncomeDrafts().forEach { draft ->
             val date = parseDate(draft.date) ?: return@forEach
-            items.add(
+            rawItems.add(
                 JournalListItem(
                     date = date,
                     typeCode = getString(R.string.journal_type_income_short),
@@ -94,7 +98,7 @@ class JournalActivity : AppCompatActivity() {
 
         storage.loadDocumentationDrafts().forEach { draft ->
             val date = parseDate(draft.date) ?: return@forEach
-            items.add(
+            rawItems.add(
                 JournalListItem(
                     date = date,
                     typeCode = getString(R.string.journal_type_documentation_short),
@@ -111,6 +115,7 @@ class JournalActivity : AppCompatActivity() {
                                     it.subtype == draft.subtype &&
                                     it.title == draft.title &&
                                     it.date == draft.date &&
+                                    it.odometer == draft.odometer &&
                                     it.validUntil == draft.validUntil &&
                                     it.amount == draft.amount &&
                                     it.comment == draft.comment
@@ -129,7 +134,7 @@ class JournalActivity : AppCompatActivity() {
 
         storage.loadTechniqueDrafts().forEach { draft ->
             val date = parseDate(draft.date) ?: return@forEach
-            items.add(
+            rawItems.add(
                 JournalListItem(
                     date = date,
                     typeCode = getString(R.string.journal_type_technique_short),
@@ -163,7 +168,22 @@ class JournalActivity : AppCompatActivity() {
             )
         }
 
-        items.sortByDescending { it.date }
+        rawItems.sortByDescending { it.date }
+
+        items.clear()
+
+        var currentMonth: YearMonth? = null
+        rawItems.forEach { item ->
+            val itemDate = item.date ?: return@forEach
+            val itemMonth = YearMonth.of(itemDate.year, itemDate.month)
+
+            if (currentMonth != itemMonth) {
+                items.add(JournalListItem.header(formatMonthHeader(itemDate)))
+                currentMonth = itemMonth
+            }
+
+            items.add(item)
+        }
     }
 
     private fun renderState() {
@@ -178,10 +198,10 @@ class JournalActivity : AppCompatActivity() {
             .setTitle(formatDialogTitle(item))
             .setMessage(item.details)
             .setPositiveButton("Изменить") { _, _ ->
-                item.editAction.invoke()
+                item.editAction?.invoke()
             }
             .setNeutralButton(R.string.journal_delete) { _, _ ->
-                val deleted = item.deleteAction.invoke()
+                val deleted = item.deleteAction?.invoke() == true
                 if (deleted) {
                     loadItems()
                     renderState()
@@ -266,6 +286,13 @@ class JournalActivity : AppCompatActivity() {
         val etTitle = addTextField(container, "Название", original.title)
         val etDate = addTextField(container, "Дата", original.date)
         val etValidUntil = addTextField(container, "Годен до", original.validUntil.orEmpty())
+        val etOdometer = addTextField(
+            container,
+            "Спидометр",
+            original.odometer,
+            false,
+            InputType.TYPE_CLASS_NUMBER
+        )
         val etAmount = addTextField(container, "Сумма", original.amount, true)
         val etComment = addTextField(container, "Комментарий", original.comment)
 
@@ -278,6 +305,7 @@ class JournalActivity : AppCompatActivity() {
             val title = etTitle.text.toString().trim()
             val date = etDate.text.toString().trim()
             val validUntil = etValidUntil.text.toString().trim().ifBlank { null }
+            val odometer = etOdometer.text.toString().trim()
             val amount = normalizeAmount(etAmount.text.toString().trim())
             val comment = etComment.text.toString().trim()
 
@@ -301,6 +329,7 @@ class JournalActivity : AppCompatActivity() {
                 subtype = subtype,
                 title = title,
                 date = date,
+                odometer = odometer,
                 validUntil = validUntil,
                 amount = amount,
                 comment = comment
@@ -312,6 +341,7 @@ class JournalActivity : AppCompatActivity() {
                         it.subtype == original.subtype &&
                         it.title == original.title &&
                         it.date == original.date &&
+                        it.odometer == original.odometer &&
                         it.validUntil == original.validUntil &&
                         it.amount == original.amount &&
                         it.comment == original.comment
@@ -417,11 +447,8 @@ class JournalActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle(title)
             .setView(container)
-            .setPositiveButton("Сохранить") { dialog, _ ->
-                val success = onSave.invoke()
-                if (!success) {
-                    dialog.dismiss()
-                }
+            .setPositiveButton("Сохранить") { _, _ ->
+                onSave.invoke()
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -489,6 +516,7 @@ class JournalActivity : AppCompatActivity() {
     private fun buildDocumentationDetails(draft: DocumentationExpenseDraft): String {
         val subtype = draft.subtype?.takeIf { it.isNotBlank() } ?: "—"
         val validUntil = draft.validUntil?.takeIf { it.isNotBlank() } ?: "—"
+        val odometer = draft.odometer.ifBlank { "—" }
         val comment = draft.comment.ifBlank { "—" }
 
         return buildString {
@@ -497,6 +525,7 @@ class JournalActivity : AppCompatActivity() {
             appendLine("Название: ${draft.title.ifBlank { "—" }}")
             appendLine("Дата: ${draft.date}")
             appendLine("Годен до: $validUntil")
+            appendLine("Спидометр: $odometer")
             appendLine("Сумма: ${draft.amount} €")
             append("Комментарий: $comment")
         }
@@ -542,6 +571,13 @@ class JournalActivity : AppCompatActivity() {
         if (parsed < 0.0) return null
 
         return cleaned
+    }
+
+    private fun formatMonthHeader(date: LocalDate): String {
+        val monthName = date.month.getDisplayName(java.time.format.TextStyle.FULL_STANDALONE, Locale("ru"))
+        return monthName.replaceFirstChar { char ->
+            if (char.isLowerCase()) char.titlecase(Locale("ru")) else char.toString()
+        } + " ${date.year}"
     }
 
     private fun dp(value: Int): Int {
