@@ -163,12 +163,12 @@
     <string-array name="documentation_subtypes_permissions">
         <item>Медкомиссия</item>
         <item>Водительские права</item>
-        <item>Удостоверение водителя такси</item>
+        <item>ATD Aplieciba</item>
         <item>Прочие документы</item>
     </string-array>
 
     <string-array name="documentation_subtypes_insurance">
-        <item>OCTA / ОСАГО</item>
+        <item>OCTA</item>
         <item>КАСКО</item>
         <item>Прочее</item>
     </string-array>
@@ -203,7 +203,7 @@
 
     <string-array name="technique_record_types">
         <item>Покупка</item>
-        <item>Установка / замена</item>
+        <item>Обсуживание</item>
     </string-array>
 
     <string-array name="quantity_units">
