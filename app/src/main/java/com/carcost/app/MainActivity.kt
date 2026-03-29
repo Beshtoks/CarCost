@@ -282,7 +282,8 @@ class MainActivity : AppCompatActivity() {
 
         val items = arrayOf(
             "Экспорт базы",
-            "Импорт базы (полная замена)"
+            "Импорт базы (полная замена)",
+            "Импорт из банка"
         )
 
         AlertDialog.Builder(this)
@@ -291,6 +292,7 @@ class MainActivity : AppCompatActivity() {
                 when (which) {
                     0 -> exportBackupLauncher.launch(buildBackupFileName())
                     1 -> importBackupLauncher.launch(arrayOf(BACKUP_MIME_TYPE, "text/plain", "*/*"))
+                    2 -> startActivity(Intent(this, BankImportActivity::class.java))
                 }
             }
             .setNegativeButton("Отмена", null)
