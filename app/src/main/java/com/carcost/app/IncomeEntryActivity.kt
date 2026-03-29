@@ -31,6 +31,10 @@ class IncomeEntryActivity : AppCompatActivity() {
     private lateinit var btnIncomeSave: Button
     private lateinit var btnIncomeCancel: Button
     private lateinit var btnIncomeNext: Button
+    private lateinit var btnIncomeDelete: Button
+
+    private var isEditMode: Boolean = false
+    private var originalDraft: IncomeDraft? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,21 +54,44 @@ class IncomeEntryActivity : AppCompatActivity() {
         btnIncomeSave = findViewById(R.id.btnIncomeSave)
         btnIncomeCancel = findViewById(R.id.btnIncomeCancel)
         btnIncomeNext = findViewById(R.id.btnIncomeNext)
+        btnIncomeDelete = findViewById(R.id.btnIncomeDelete)
+
+        isEditMode = intent.getBooleanExtra(EXTRA_EDIT_MODE, false)
+        originalDraft = intent.getSerializableExtra(EXTRA_ORIGINAL_DRAFT) as? IncomeDraft
 
         setupIncomeTypeSpinner()
         setupDateField(etIncomeDate)
-        updateSubtypeVisibility()
+
+        if (isEditMode && originalDraft != null) {
+            fillFormFromDraft(originalDraft!!)
+            btnIncomeDelete.visibility = View.VISIBLE
+        } else {
+            updateSubtypeVisibility()
+            btnIncomeDelete.visibility = View.GONE
+        }
 
         btnIncomeSave.setOnClickListener {
-            saveIncomeAndClose()
+            if (isEditMode) {
+                updateIncomeAndClose()
+            } else {
+                saveIncomeAndClose()
+            }
         }
 
         btnIncomeNext.setOnClickListener {
-            saveIncomeAndStay()
+            if (isEditMode) {
+                updateIncomeAndStay()
+            } else {
+                saveIncomeAndStay()
+            }
         }
 
         btnIncomeCancel.setOnClickListener {
             finish()
+        }
+
+        btnIncomeDelete.setOnClickListener {
+            deleteIncomeAndClose()
         }
     }
 
@@ -82,6 +109,33 @@ class IncomeEntryActivity : AppCompatActivity() {
         spinnerIncomeType.onItemSelectedListener = SimpleItemSelectedListener {
             updateSubtypeVisibility()
         }
+    }
+
+    private fun fillFormFromDraft(draft: IncomeDraft) {
+        val incomeTypes = resources.getStringArray(R.array.income_types)
+        val typeIndex = incomeTypes.indexOfFirst { it == draft.type }
+        if (typeIndex >= 0) {
+            spinnerIncomeType.setSelection(typeIndex)
+        }
+
+        updateSubtypeVisibility()
+
+        if (!draft.subtype.isNullOrBlank() && subtypeContainer.visibility == View.VISIBLE) {
+            val adapter = spinnerIncomeSubtype.adapter as? ArrayAdapter<*>
+            if (adapter != null) {
+                for (i in 0 until adapter.count) {
+                    if (adapter.getItem(i)?.toString() == draft.subtype) {
+                        spinnerIncomeSubtype.setSelection(i)
+                        break
+                    }
+                }
+            }
+        }
+
+        etIncomeTitle.setText(draft.title)
+        etIncomeDate.setText(draft.date)
+        etIncomeAmount.setText(draft.amount)
+        etIncomeComment.setText(draft.comment)
     }
 
     private fun updateSubtypeVisibility() {
@@ -196,6 +250,84 @@ class IncomeEntryActivity : AppCompatActivity() {
         clearFieldsForNextIncome()
     }
 
+    private fun updateIncomeAndClose() {
+        val updated = buildIncomeDraft() ?: return
+        val original = originalDraft ?: return
+
+        val list = storage.loadIncomeDrafts()
+        val index = list.indexOfFirst {
+            it.type == original.type &&
+                    it.subtype == original.subtype &&
+                    it.title == original.title &&
+                    it.date == original.date &&
+                    it.amount == original.amount &&
+                    it.comment == original.comment
+        }
+
+        if (index < 0) {
+            Toast.makeText(this, "Не удалось найти запись для изменения", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        list[index] = updated
+        storage.saveIncomeDrafts(list)
+        originalDraft = updated
+
+        Toast.makeText(this, "Запись изменена", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
+    private fun updateIncomeAndStay() {
+        val updated = buildIncomeDraft() ?: return
+        val original = originalDraft ?: return
+
+        val list = storage.loadIncomeDrafts()
+        val index = list.indexOfFirst {
+            it.type == original.type &&
+                    it.subtype == original.subtype &&
+                    it.title == original.title &&
+                    it.date == original.date &&
+                    it.amount == original.amount &&
+                    it.comment == original.comment
+        }
+
+        if (index < 0) {
+            Toast.makeText(this, "Не удалось найти запись для изменения", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        list[index] = updated
+        storage.saveIncomeDrafts(list)
+        originalDraft = updated
+
+        Toast.makeText(this, "Запись изменена", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun deleteIncomeAndClose() {
+        val original = originalDraft ?: return
+
+        val list = storage.loadIncomeDrafts()
+        val index = list.indexOfFirst {
+            it.type == original.type &&
+                    it.subtype == original.subtype &&
+                    it.title == original.title &&
+                    it.date == original.date &&
+                    it.amount == original.amount &&
+                    it.comment == original.comment
+        }
+
+        if (index < 0) {
+            Toast.makeText(this, "Не удалось найти запись для удаления", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        list.removeAt(index)
+        storage.saveIncomeDrafts(list)
+
+        Toast.makeText(this, "Запись удалена", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
     private fun buildIncomeDraft(): IncomeDraft? {
         val type = spinnerIncomeType.selectedItem?.toString().orEmpty()
         val subtype = if (subtypeContainer.visibility == View.VISIBLE) {
@@ -234,7 +366,6 @@ class IncomeEntryActivity : AppCompatActivity() {
         etIncomeTitle.text?.clear()
         etIncomeAmount.text?.clear()
         etIncomeComment.text?.clear()
-
         etIncomeTitle.requestFocus()
     }
 
@@ -247,5 +378,10 @@ class IncomeEntryActivity : AppCompatActivity() {
         if (parsed < 0.0) return null
 
         return cleaned
+    }
+
+    companion object {
+        const val EXTRA_EDIT_MODE = "extra_edit_mode"
+        const val EXTRA_ORIGINAL_DRAFT = "extra_original_draft"
     }
 }

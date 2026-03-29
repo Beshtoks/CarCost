@@ -157,12 +157,7 @@ object CitadeleCsvImporter {
         }
 
         if (amountDr.isNotBlank()) {
-            if (
-                upper.contains("MAZGA") ||
-                upper.contains("PUTOAS") ||
-                upper.contains("MOYKA") ||
-                upper.contains("МОЙКА")
-            ) {
+            if (isWashPayment(upper)) {
                 val draft = TechniqueExpenseDraft(
                     recordType = "Покупка",
                     titles = listOf("Мойка"),
@@ -319,6 +314,25 @@ object CitadeleCsvImporter {
             amount = amount,
             kind = BankImportKind.UNKNOWN
         )
+    }
+
+    private fun isWashPayment(upperNarrative: String): Boolean {
+        return upperNarrative.contains("WASH") ||
+                upperNarrative.contains("WASH AND DRIVE") ||
+                upperNarrative.contains("CAR WASH") ||
+                upperNarrative.contains("MAZGA") ||
+                upperNarrative.contains("MAZGATAVA") ||
+                upperNarrative.contains("MAZGA PATS") ||
+                upperNarrative.contains("AUTO MAZ") ||
+                upperNarrative.contains("AUTOMAZ") ||
+                upperNarrative.contains("PUTOAS") ||
+                upperNarrative.contains("LIELIRBES AUTO MAZ") ||
+                upperNarrative.contains(" MAZ ") ||
+                upperNarrative.startsWith("MAZ ") ||
+                upperNarrative.endsWith(" MAZ") ||
+                upperNarrative.contains(" MAZ,") ||
+                upperNarrative.contains(" MAZ.") ||
+                upperNarrative.contains(" MAZ-")
     }
 
     private fun shortTitleFromNarrative(narrative: String, fallback: String): String {

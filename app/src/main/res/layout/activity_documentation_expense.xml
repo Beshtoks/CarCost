@@ -151,39 +151,65 @@
             android:inputType="textCapSentences|textMultiLine"
             android:minLines="3" />
 
-        <Button
-            android:id="@+id/btnDocumentationNext"
+        <LinearLayout
+            android:id="@+id/layoutDocumentationButtonsTop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Следующий"
-            android:textAllCaps="false" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="2">
 
             <Button
-                android:id="@+id/btnDocumentationCancel"
+                android:id="@+id/btnDocumentationNext"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:text="@string/action_cancel"
+                android:text="Следующий"
                 android:textAllCaps="false" />
 
             <Button
                 android:id="@+id/btnDocumentationSave"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_action_green"
                 android:backgroundTint="@null"
                 android:text="@string/action_save"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutDocumentationButtonsBottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <Button
+                android:id="@+id/btnDocumentationCancel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:text="@string/action_cancel"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/btnDocumentationDelete"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_action_red"
+                android:backgroundTint="@null"
+                android:text="Удалить"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:visibility="gone" />
         </LinearLayout>
 
     </LinearLayout>

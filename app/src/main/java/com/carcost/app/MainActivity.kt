@@ -428,62 +428,160 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateCostValues() {
-        val allExpenses = buildAllExpenseItems()
-
-        if (allExpenses.isEmpty()) {
+        val odometerPoints = buildOdometerPoints()
+        if (odometerPoints.size < 2) {
             tvCostPerDayValue.text = getString(R.string.cost_no_data)
             tvCostPerKmValue.text = getString(R.string.cost_no_data)
             return
         }
 
-        val today = LocalDate.now()
-        val earliestExpenseDate = allExpenses.minOf { it.date }
-        val totalDaysFromStart = ChronoUnit.DAYS.between(earliestExpenseDate, today).toInt().coerceAtLeast(1)
-
-        val useRollingYear = totalDaysFromStart >= 365
-        val windowStartDate = if (useRollingYear) today.minusDays(365) else earliestExpenseDate
-
-        val filteredExpenses = allExpenses.filter { !it.date.isBefore(windowStartDate) }
-        val totalExpenseAmount = filteredExpenses.sumOf { it.amount }
-        val divisorDays = if (useRollingYear) 365 else totalDaysFromStart.coerceAtLeast(1)
-
-        val costPerDay = totalExpenseAmount / divisorDays.toDouble()
-        tvCostPerDayValue.text = "${formatMoney(costPerDay)} / сутки"
-
-        val currentMileage = extractDigits(tvMileageValue.text.toString()).toLongOrNull()
-        val startMileage = storage.loadStartMileage()?.toLongOrNull()
-
-        if (currentMileage == null || startMileage == null || currentMileage <= startMileage) {
+        val segments = buildMileageSegments(odometerPoints)
+        if (segments.isEmpty()) {
+            tvCostPerDayValue.text = getString(R.string.cost_no_data)
             tvCostPerKmValue.text = getString(R.string.cost_no_data)
             return
         }
 
-        val mileageDelta = currentMileage - startMileage
-        if (mileageDelta <= 0L) {
+        val averageDailyMileage = segments.map { it.dailyMileage }.average()
+        if (averageDailyMileage <= 0.0) {
+            tvCostPerDayValue.text = getString(R.string.cost_no_data)
             tvCostPerKmValue.text = getString(R.string.cost_no_data)
             return
         }
 
-        val costPerKm = totalExpenseAmount / mileageDelta.toDouble()
-        tvCostPerKmValue.text = "${formatMoney(costPerKm)} / км"
+        val firstPointDate = odometerPoints.first().date
+        val lastPointDate = odometerPoints.last().date
+        val periodDays = ChronoUnit.DAYS.between(firstPointDate, lastPointDate).toInt().coerceAtLeast(1)
+
+        val nonFuelExpenses = buildNonFuelExpenseItems(firstPointDate, lastPointDate)
+        val nonFuelDailyCost = nonFuelExpenses.sumOf { it.amount } / periodDays.toDouble()
+
+        val averageFuelConsumptionPer100 = buildAverageFuelConsumptionPer100(segments)
+        val currentFuelPrice = storage.loadFuelPrice()?.replace(',', '.')?.toDoubleOrNull() ?: 0.0
+        val fuelCostPerKm = if (averageFuelConsumptionPer100 != null && currentFuelPrice > 0.0) {
+            (averageFuelConsumptionPer100 / 100.0) * currentFuelPrice
+        } else {
+            0.0
+        }
+
+        val nonFuelCostPerKm = nonFuelDailyCost / averageDailyMileage
+        val totalCostPerKm = nonFuelCostPerKm + fuelCostPerKm
+        val totalCostPerDay = nonFuelDailyCost + (fuelCostPerKm * averageDailyMileage)
+
+        tvCostPerDayValue.text = "${formatMoney(totalCostPerDay)} / сутки"
+        tvCostPerKmValue.text = "${formatMoney(totalCostPerKm)} / км"
     }
 
-    private fun buildAllExpenseItems(): List<ExpenseItem> {
+    private fun buildOdometerPoints(): List<OdometerPoint> {
+        val points = mutableListOf<OdometerPoint>()
+
+        documentationExpenseDrafts.forEach { draft ->
+            val date = parseDraftDate(draft.date) ?: return@forEach
+            val mileage = draft.odometer.trim().toLongOrNull() ?: return@forEach
+            if (mileage > 0L) {
+                points.add(OdometerPoint(date = date, mileage = mileage))
+            }
+        }
+
+        techniqueExpenseDrafts.forEach { draft ->
+            val date = parseDraftDate(draft.date) ?: return@forEach
+            val mileage = draft.mileage.trim().toLongOrNull() ?: return@forEach
+            if (mileage > 0L) {
+                points.add(OdometerPoint(date = date, mileage = mileage))
+            }
+        }
+
+        val currentMileage = extractDigits(tvMileageValue.text.toString()).toLongOrNull()
+        if (currentMileage != null && currentMileage > 0L) {
+            points.add(OdometerPoint(date = LocalDate.now(), mileage = currentMileage))
+        }
+
+        return points
+            .distinctBy { "${it.date}|${it.mileage}" }
+            .sortedWith(compareBy<OdometerPoint> { it.date }.thenBy { it.mileage })
+    }
+
+    private fun buildMileageSegments(points: List<OdometerPoint>): List<MileageSegment> {
+        if (points.size < 2) return emptyList()
+
+        val segments = mutableListOf<MileageSegment>()
+        for (i in 0 until points.lastIndex) {
+            val start = points[i]
+            val end = points[i + 1]
+            val days = ChronoUnit.DAYS.between(start.date, end.date).toInt()
+            val kmDelta = end.mileage - start.mileage
+
+            if (days <= 0 || kmDelta <= 0L) continue
+
+            segments.add(
+                MileageSegment(
+                    startDate = start.date,
+                    endDate = end.date,
+                    mileageDelta = kmDelta,
+                    days = days,
+                    dailyMileage = kmDelta.toDouble() / days.toDouble()
+                )
+            )
+        }
+
+        return segments
+    }
+
+    private fun buildNonFuelExpenseItems(
+        startDate: LocalDate,
+        endDate: LocalDate
+    ): List<ExpenseItem> {
         val result = mutableListOf<ExpenseItem>()
 
         documentationExpenseDrafts.forEach { draft ->
             val date = parseDraftDate(draft.date) ?: return@forEach
+            if (date.isBefore(startDate) || date.isAfter(endDate)) return@forEach
             val amount = parseAmount(draft.amount)
             result.add(ExpenseItem(date = date, amount = amount))
         }
 
         techniqueExpenseDrafts.forEach { draft ->
             val date = parseDraftDate(draft.date) ?: return@forEach
+            if (date.isBefore(startDate) || date.isAfter(endDate)) return@forEach
+            if (isFuelDraft(draft)) return@forEach
             val amount = parseAmount(draft.amount)
             result.add(ExpenseItem(date = date, amount = amount))
         }
 
         return result
+    }
+
+    private fun buildAverageFuelConsumptionPer100(segments: List<MileageSegment>): Double? {
+        val consumptions = segments.mapNotNull { segment ->
+            val liters = techniqueExpenseDrafts
+                .asSequence()
+                .filter { isFuelDraft(it) }
+                .filter { draft ->
+                    val date = parseDraftDate(draft.date) ?: return@filter false
+                    !date.isBefore(segment.startDate) && !date.isAfter(segment.endDate)
+                }
+                .sumOf { parseQuantity(it.quantity) }
+
+            if (liters <= 0.0 || segment.mileageDelta <= 0L) {
+                null
+            } else {
+                (liters / segment.mileageDelta.toDouble()) * 100.0
+            }
+        }
+
+        return if (consumptions.isEmpty()) null else consumptions.average()
+    }
+
+    private fun isFuelDraft(draft: TechniqueExpenseDraft): Boolean {
+        if (!draft.quantityUnit.equals("л", ignoreCase = true)) return false
+
+        return draft.titles.any { title ->
+            val normalized = title.trim().lowercase(Locale.getDefault())
+            normalized == "топливо" ||
+                    normalized.contains("топлив") ||
+                    normalized.contains("fuel") ||
+                    normalized.contains("neste")
+        }
     }
 
     private fun updateSoonDateValues() {
@@ -498,7 +596,8 @@ class MainActivity : AppCompatActivity() {
 
                 SoonDateItem(
                     title = buildDocumentationTitle(draft),
-                    targetDate = validDate
+                    targetDate = validDate,
+                    draft = draft
                 )
             }
             .sortedBy { it.targetDate }
@@ -513,7 +612,8 @@ class MainActivity : AppCompatActivity() {
             addSoonDateRow(
                 title = item.title,
                 value = formatRemainingDate(daysLeft),
-                exactDate = item.targetDate
+                exactDate = item.targetDate,
+                draft = item.draft
             )
         }
     }
@@ -541,7 +641,8 @@ class MainActivity : AppCompatActivity() {
 
             SoonMileageItem(
                 title = nodeName,
-                remainingKm = remaining
+                remainingKm = remaining,
+                draft = latestReplacement
             )
         }.sortedBy { it.remainingKm }
 
@@ -553,7 +654,8 @@ class MainActivity : AppCompatActivity() {
         items.forEach { item ->
             addSoonMileageRow(
                 title = item.title,
-                value = formatRemainingMileage(item.remainingKm)
+                value = formatRemainingMileage(item.remainingKm),
+                draft = item.draft
             )
         }
     }
@@ -573,10 +675,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildDocumentationTitle(draft: DocumentationExpenseDraft): String {
+        val type = draft.type.trim()
+        val title = draft.title.trim()
+
         return when {
-            draft.title.isNotBlank() -> draft.title
-            !draft.subtype.isNullOrBlank() -> "${draft.type}: ${draft.subtype}"
-            else -> draft.type
+            type.isNotEmpty() && title.isNotEmpty() -> "$type $title"
+            type.isNotEmpty() -> type
+            title.isNotEmpty() -> title
+            else -> "Без названия"
         }
     }
 
@@ -589,7 +695,12 @@ class MainActivity : AppCompatActivity() {
         container.addView(textView)
     }
 
-    private fun addSoonDateRow(title: String, value: String, exactDate: LocalDate) {
+    private fun addSoonDateRow(
+        title: String,
+        value: String,
+        exactDate: LocalDate,
+        draft: DocumentationExpenseDraft
+    ) {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, dp(4), 0, dp(8))
@@ -597,6 +708,10 @@ class MainActivity : AppCompatActivity() {
             isFocusable = true
             setOnClickListener {
                 showSoonDatePopup(this, formatExactSoonDate(exactDate))
+            }
+            setOnLongClickListener {
+                openDocumentationForEdit(draft)
+                true
             }
         }
 
@@ -618,10 +733,20 @@ class MainActivity : AppCompatActivity() {
         containerSoonByDate.addView(row)
     }
 
-    private fun addSoonMileageRow(title: String, value: String) {
+    private fun addSoonMileageRow(
+        title: String,
+        value: String,
+        draft: TechniqueExpenseDraft
+    ) {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, dp(4), 0, dp(8))
+            isClickable = true
+            isFocusable = true
+            setOnLongClickListener {
+                openTechniqueForEdit(draft)
+                true
+            }
         }
 
         val titleView = TextView(this).apply {
@@ -640,6 +765,22 @@ class MainActivity : AppCompatActivity() {
         row.addView(titleView)
         row.addView(valueView)
         containerSoonByMileage.addView(row)
+    }
+
+    private fun openDocumentationForEdit(draft: DocumentationExpenseDraft) {
+        val intent = Intent(this, DocumentationExpenseActivity::class.java).apply {
+            putExtra(DocumentationExpenseActivity.EXTRA_EDIT_MODE, true)
+            putExtra(DocumentationExpenseActivity.EXTRA_ORIGINAL_DRAFT, draft)
+        }
+        startActivity(intent)
+    }
+
+    private fun openTechniqueForEdit(draft: TechniqueExpenseDraft) {
+        val intent = Intent(this, TechniqueExpenseActivity::class.java).apply {
+            putExtra(TechniqueExpenseActivity.EXTRA_EDIT_MODE, true)
+            putExtra(TechniqueExpenseActivity.EXTRA_ORIGINAL_DRAFT, draft)
+        }
+        startActivity(intent)
     }
 
     private fun showSoonDatePopup(anchor: View, text: String) {
@@ -750,7 +891,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun parseAmount(value: String): Double {
-        return value.replace(",", ".").toDoubleOrNull() ?: 0.0
+        return value.replace(" ", "").replace(",", ".").toDoubleOrNull() ?: 0.0
+    }
+
+    private fun parseQuantity(value: String): Double {
+        return value.replace(" ", "").replace(",", ".").toDoubleOrNull() ?: 0.0
     }
 
     private fun formatMoney(value: Double): String {
@@ -802,6 +947,7 @@ class MainActivity : AppCompatActivity() {
                 if (value.isNotEmpty()) {
                     tvFuelValue.text = getString(R.string.fuel_value_format, value)
                     storage.saveFuelPrice(value)
+                    updateCostValues()
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
@@ -861,12 +1007,14 @@ class MainActivity : AppCompatActivity() {
 
     private data class SoonDateItem(
         val title: String,
-        val targetDate: LocalDate
+        val targetDate: LocalDate,
+        val draft: DocumentationExpenseDraft
     )
 
     private data class SoonMileageItem(
         val title: String,
-        val remainingKm: Long
+        val remainingKm: Long,
+        val draft: TechniqueExpenseDraft
     )
 
     private data class TechniqueDraftWithDate(
@@ -882,5 +1030,18 @@ class MainActivity : AppCompatActivity() {
     private data class ExpenseItem(
         val date: LocalDate,
         val amount: Double
+    )
+
+    private data class OdometerPoint(
+        val date: LocalDate,
+        val mileage: Long
+    )
+
+    private data class MileageSegment(
+        val startDate: LocalDate,
+        val endDate: LocalDate,
+        val mileageDelta: Long,
+        val days: Int,
+        val dailyMileage: Double
     )
 }

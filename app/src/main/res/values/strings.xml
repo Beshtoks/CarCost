@@ -123,20 +123,20 @@
         <item>Налоги</item>
         <item>Банковские расходы</item>
         <item>Бухгалтерия</item>
-        <item>Разрешения / удостоверения</item>
+        <item>Разрешения</item>
         <item>Страхование</item>
         <item>Парковки</item>
-        <item>Сервисы / подписки</item>
+        <item>Сервисы</item>
         <item>Штрафы</item>
         <item>Пропуски</item>
-        <item>Кредит / финансирование</item>
+        <item>Кредит</item>
         <item>Прочее</item>
     </string-array>
 
     <string-array name="documentation_subtypes_license">
         <item>Компания</item>
         <item>Рига</item>
-        <item>Межгород (Латвия)</item>
+        <item>Районная</item>
         <item>Юрмала</item>
         <item>Другое</item>
     </string-array>

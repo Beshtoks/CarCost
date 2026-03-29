@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -36,6 +37,10 @@ class TechniqueExpenseActivity : AppCompatActivity() {
     private lateinit var btnTechniqueSave: Button
     private lateinit var btnTechniqueCancel: Button
     private lateinit var btnTechniqueNext: Button
+    private lateinit var btnTechniqueDelete: Button
+
+    private var isEditMode: Boolean = false
+    private var originalDraft: TechniqueExpenseDraft? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,21 +61,44 @@ class TechniqueExpenseActivity : AppCompatActivity() {
         btnTechniqueSave = findViewById(R.id.btnTechniqueSave)
         btnTechniqueCancel = findViewById(R.id.btnTechniqueCancel)
         btnTechniqueNext = findViewById(R.id.btnTechniqueNext)
+        btnTechniqueDelete = findViewById(R.id.btnTechniqueDelete)
+
+        isEditMode = intent.getBooleanExtra(EXTRA_EDIT_MODE, false)
+        originalDraft = intent.getSerializableExtra(EXTRA_ORIGINAL_DRAFT) as? TechniqueExpenseDraft
 
         setupSpinners()
         setupDateField(etTechniqueDate)
-        addTitleRow()
+
+        if (isEditMode && originalDraft != null) {
+            fillFormFromDraft(originalDraft!!)
+            btnTechniqueDelete.visibility = View.VISIBLE
+        } else {
+            addTitleRow()
+            btnTechniqueDelete.visibility = View.GONE
+        }
 
         btnTechniqueSave.setOnClickListener {
-            saveTechniqueAndClose()
+            if (isEditMode) {
+                updateTechniqueAndClose()
+            } else {
+                saveTechniqueAndClose()
+            }
         }
 
         btnTechniqueNext.setOnClickListener {
-            saveTechniqueAndStay()
+            if (isEditMode) {
+                updateTechniqueAndStay()
+            } else {
+                saveTechniqueAndStay()
+            }
         }
 
         btnTechniqueCancel.setOnClickListener {
             finish()
+        }
+
+        btnTechniqueDelete.setOnClickListener {
+            deleteTechniqueAndClose()
         }
     }
 
@@ -90,6 +118,35 @@ class TechniqueExpenseActivity : AppCompatActivity() {
         )
         quantityUnitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerQuantityUnit.adapter = quantityUnitAdapter
+    }
+
+    private fun fillFormFromDraft(draft: TechniqueExpenseDraft) {
+        val recordTypes = resources.getStringArray(R.array.technique_record_types)
+        val recordTypeIndex = recordTypes.indexOfFirst { it == draft.recordType }
+        if (recordTypeIndex >= 0) {
+            spinnerTechniqueRecordType.setSelection(recordTypeIndex)
+        }
+
+        val quantityUnits = resources.getStringArray(R.array.quantity_units)
+        val quantityUnitIndex = quantityUnits.indexOfFirst { it == draft.quantityUnit }
+        if (quantityUnitIndex >= 0) {
+            spinnerQuantityUnit.setSelection(quantityUnitIndex)
+        }
+
+        titlesContainer.removeAllViews()
+        if (draft.titles.isEmpty()) {
+            addTitleRow()
+        } else {
+            draft.titles.forEach { title ->
+                addTitleRow(title)
+            }
+        }
+
+        etTechniqueDate.setText(draft.date)
+        etTechniqueMileage.setText(draft.mileage)
+        etTechniqueQuantity.setText(draft.quantity)
+        etTechniqueAmount.setText(draft.amount)
+        etTechniqueComment.setText(draft.comment)
     }
 
     private fun setupDateField(editText: EditText) {
@@ -226,6 +283,90 @@ class TechniqueExpenseActivity : AppCompatActivity() {
         clearFieldsForNextTechnique()
     }
 
+    private fun updateTechniqueAndClose() {
+        val updated = buildTechniqueDraft() ?: return
+        val original = originalDraft ?: return
+
+        val list = storage.loadTechniqueDrafts()
+        val index = list.indexOfFirst {
+            it.recordType == original.recordType &&
+                    it.titles == original.titles &&
+                    it.date == original.date &&
+                    it.mileage == original.mileage &&
+                    it.quantity == original.quantity &&
+                    it.quantityUnit == original.quantityUnit &&
+                    it.amount == original.amount &&
+                    it.comment == original.comment
+        }
+
+        if (index < 0) {
+            Toast.makeText(this, "Не удалось найти запись для изменения", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        list[index] = updated
+        storage.saveTechniqueDrafts(list)
+        originalDraft = updated
+
+        Toast.makeText(this, "Запись изменена", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
+    private fun updateTechniqueAndStay() {
+        val updated = buildTechniqueDraft() ?: return
+        val original = originalDraft ?: return
+
+        val list = storage.loadTechniqueDrafts()
+        val index = list.indexOfFirst {
+            it.recordType == original.recordType &&
+                    it.titles == original.titles &&
+                    it.date == original.date &&
+                    it.mileage == original.mileage &&
+                    it.quantity == original.quantity &&
+                    it.quantityUnit == original.quantityUnit &&
+                    it.amount == original.amount &&
+                    it.comment == original.comment
+        }
+
+        if (index < 0) {
+            Toast.makeText(this, "Не удалось найти запись для изменения", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        list[index] = updated
+        storage.saveTechniqueDrafts(list)
+        originalDraft = updated
+
+        Toast.makeText(this, "Запись изменена", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun deleteTechniqueAndClose() {
+        val original = originalDraft ?: return
+
+        val list = storage.loadTechniqueDrafts()
+        val index = list.indexOfFirst {
+            it.recordType == original.recordType &&
+                    it.titles == original.titles &&
+                    it.date == original.date &&
+                    it.mileage == original.mileage &&
+                    it.quantity == original.quantity &&
+                    it.quantityUnit == original.quantityUnit &&
+                    it.amount == original.amount &&
+                    it.comment == original.comment
+        }
+
+        if (index < 0) {
+            Toast.makeText(this, "Не удалось найти запись для удаления", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        list.removeAt(index)
+        storage.saveTechniqueDrafts(list)
+
+        Toast.makeText(this, "Запись удалена", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
     private fun buildTechniqueDraft(): TechniqueExpenseDraft? {
         val recordType = spinnerTechniqueRecordType.selectedItem?.toString().orEmpty()
         val titles = collectTitles()
@@ -326,5 +467,10 @@ class TechniqueExpenseActivity : AppCompatActivity() {
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
+    }
+
+    companion object {
+        const val EXTRA_EDIT_MODE = "extra_edit_mode"
+        const val EXTRA_ORIGINAL_DRAFT = "extra_original_draft"
     }
 }
