@@ -17,6 +17,8 @@ import java.util.Locale
 
 class IncomeEntryActivity : AppCompatActivity() {
 
+    private lateinit var storage: AppStorage
+
     private lateinit var spinnerIncomeType: Spinner
     private lateinit var subtypeContainer: LinearLayout
     private lateinit var spinnerIncomeSubtype: Spinner
@@ -28,10 +30,13 @@ class IncomeEntryActivity : AppCompatActivity() {
 
     private lateinit var btnIncomeSave: Button
     private lateinit var btnIncomeCancel: Button
+    private lateinit var btnIncomeNext: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_income_entry)
+
+        storage = AppStorage(this)
 
         spinnerIncomeType = findViewById(R.id.spinnerIncomeType)
         subtypeContainer = findViewById(R.id.subtypeContainer)
@@ -44,13 +49,18 @@ class IncomeEntryActivity : AppCompatActivity() {
 
         btnIncomeSave = findViewById(R.id.btnIncomeSave)
         btnIncomeCancel = findViewById(R.id.btnIncomeCancel)
+        btnIncomeNext = findViewById(R.id.btnIncomeNext)
 
         setupIncomeTypeSpinner()
         setupDateField(etIncomeDate)
         updateSubtypeVisibility()
 
         btnIncomeSave.setOnClickListener {
-            saveIncome()
+            saveIncomeAndClose()
+        }
+
+        btnIncomeNext.setOnClickListener {
+            saveIncomeAndStay()
         }
 
         btnIncomeCancel.setOnClickListener {
@@ -155,7 +165,38 @@ class IncomeEntryActivity : AppCompatActivity() {
         return calendar
     }
 
-    private fun saveIncome() {
+    private fun saveIncomeAndClose() {
+        val draft = buildIncomeDraft() ?: return
+
+        val resultIntent = Intent().apply {
+            putExtra(MainActivity.EXTRA_INCOME_DRAFT, draft)
+        }
+
+        setResult(Activity.RESULT_OK, resultIntent)
+        finish()
+    }
+
+    private fun saveIncomeAndStay() {
+        val draft = buildIncomeDraft() ?: return
+
+        val list = storage.loadIncomeDrafts()
+        list.add(draft)
+        storage.saveIncomeDrafts(list)
+
+        Toast.makeText(
+            this,
+            getString(
+                R.string.message_income_saved_with_amount,
+                draft.amount,
+                list.size.toString()
+            ),
+            Toast.LENGTH_SHORT
+        ).show()
+
+        clearFieldsForNextIncome()
+    }
+
+    private fun buildIncomeDraft(): IncomeDraft? {
         val type = spinnerIncomeType.selectedItem?.toString().orEmpty()
         val subtype = if (subtypeContainer.visibility == View.VISIBLE) {
             spinnerIncomeSubtype.selectedItem?.toString()
@@ -170,16 +211,16 @@ class IncomeEntryActivity : AppCompatActivity() {
 
         if (date.isEmpty() || rawAmount.isEmpty()) {
             Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
         val normalizedAmount = normalizeAmount(rawAmount)
         if (normalizedAmount == null) {
             Toast.makeText(this, R.string.message_invalid_amount, Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
-        val draft = IncomeDraft(
+        return IncomeDraft(
             type = type,
             subtype = subtype,
             title = title,
@@ -187,13 +228,14 @@ class IncomeEntryActivity : AppCompatActivity() {
             amount = normalizedAmount,
             comment = comment
         )
+    }
 
-        val resultIntent = Intent().apply {
-            putExtra(MainActivity.EXTRA_INCOME_DRAFT, draft)
-        }
+    private fun clearFieldsForNextIncome() {
+        etIncomeTitle.text?.clear()
+        etIncomeAmount.text?.clear()
+        etIncomeComment.text?.clear()
 
-        setResult(Activity.RESULT_OK, resultIntent)
-        finish()
+        etIncomeTitle.requestFocus()
     }
 
     private fun normalizeAmount(value: String): String? {

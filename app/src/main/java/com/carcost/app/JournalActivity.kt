@@ -1,5 +1,6 @@
 package com.carcost.app
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -15,6 +16,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
+import java.util.Calendar
 import java.util.Locale
 
 class JournalActivity : AppCompatActivity() {
@@ -221,6 +223,7 @@ class JournalActivity : AppCompatActivity() {
         val etSubtype = addTextField(container, "Подтип", original.subtype.orEmpty())
         val etTitle = addTextField(container, "Название", original.title)
         val etDate = addTextField(container, "Дата", original.date)
+        setupDateField(etDate)
         val etAmount = addTextField(container, "Сумма", original.amount, true)
         val etComment = addTextField(container, "Комментарий", original.comment)
 
@@ -285,7 +288,9 @@ class JournalActivity : AppCompatActivity() {
         val etSubtype = addTextField(container, "Подтип", original.subtype.orEmpty())
         val etTitle = addTextField(container, "Название", original.title)
         val etDate = addTextField(container, "Дата", original.date)
+        setupDateField(etDate)
         val etValidUntil = addTextField(container, "Годен до", original.validUntil.orEmpty())
+        setupDateField(etValidUntil)
         val etOdometer = addTextField(
             container,
             "Спидометр",
@@ -367,6 +372,7 @@ class JournalActivity : AppCompatActivity() {
         val etRecordType = addTextField(container, "Тип записи", original.recordType)
         val etTitles = addTextField(container, "Название", original.titles.joinToString(", "))
         val etDate = addTextField(container, "Дата", original.date)
+        setupDateField(etDate)
         val etMileage = addTextField(container, "Пробег", original.mileage, false, InputType.TYPE_CLASS_NUMBER)
         val etQuantity = addTextField(container, "Количество", original.quantity)
         val etQuantityUnit = addTextField(container, "Ед. изм.", original.quantityUnit)
@@ -493,6 +499,57 @@ class JournalActivity : AppCompatActivity() {
         layout.addView(etValue)
 
         return etValue
+    }
+
+    private fun setupDateField(editText: EditText) {
+        editText.keyListener = null
+        editText.isFocusable = false
+        editText.isClickable = true
+
+        editText.setOnClickListener {
+            showDatePicker(editText)
+        }
+    }
+
+    private fun showDatePicker(target: EditText) {
+        val calendar = parseDateOrToday(target.text.toString().trim())
+
+        val dialog = DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                target.setText(
+                    String.format(
+                        Locale.getDefault(),
+                        "%02d.%02d.%04d",
+                        dayOfMonth,
+                        month + 1,
+                        year
+                    )
+                )
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+
+        dialog.show()
+    }
+
+    private fun parseDateOrToday(value: String): Calendar {
+        val calendar = Calendar.getInstance()
+        val parts = value.split(".")
+
+        if (parts.size == 3) {
+            val day = parts[0].toIntOrNull()
+            val month = parts[1].toIntOrNull()
+            val year = parts[2].toIntOrNull()
+
+            if (day != null && month != null && year != null) {
+                calendar.set(year, month - 1, day)
+            }
+        }
+
+        return calendar
     }
 
     private fun formatDialogTitle(item: JournalListItem): String {

@@ -8,6 +8,7 @@ import android.text.InputType
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
@@ -19,6 +20,8 @@ import java.util.Calendar
 import java.util.Locale
 
 class TechniqueExpenseActivity : AppCompatActivity() {
+
+    private lateinit var storage: AppStorage
 
     private lateinit var spinnerTechniqueRecordType: Spinner
     private lateinit var spinnerQuantityUnit: Spinner
@@ -32,10 +35,13 @@ class TechniqueExpenseActivity : AppCompatActivity() {
 
     private lateinit var btnTechniqueSave: Button
     private lateinit var btnTechniqueCancel: Button
+    private lateinit var btnTechniqueNext: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_technique_expense)
+
+        storage = AppStorage(this)
 
         spinnerTechniqueRecordType = findViewById(R.id.spinnerTechniqueRecordType)
         spinnerQuantityUnit = findViewById(R.id.spinnerQuantityUnit)
@@ -49,19 +55,18 @@ class TechniqueExpenseActivity : AppCompatActivity() {
 
         btnTechniqueSave = findViewById(R.id.btnTechniqueSave)
         btnTechniqueCancel = findViewById(R.id.btnTechniqueCancel)
-
-        etTechniqueDate.hint = null
-        etTechniqueMileage.hint = null
-        etTechniqueQuantity.hint = null
-        etTechniqueAmount.hint = null
-        etTechniqueComment.hint = null
+        btnTechniqueNext = findViewById(R.id.btnTechniqueNext)
 
         setupSpinners()
         setupDateField(etTechniqueDate)
         addTitleRow()
 
         btnTechniqueSave.setOnClickListener {
-            saveTechnique()
+            saveTechniqueAndClose()
+        }
+
+        btnTechniqueNext.setOnClickListener {
+            saveTechniqueAndStay()
         }
 
         btnTechniqueCancel.setOnClickListener {
@@ -138,7 +143,7 @@ class TechniqueExpenseActivity : AppCompatActivity() {
         return calendar
     }
 
-    private fun addTitleRow() {
+    private fun addTitleRow(prefill: String = "") {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -150,8 +155,19 @@ class TechniqueExpenseActivity : AppCompatActivity() {
             }
         }
 
-        val editText = EditText(this).apply {
+        val titleSuggestions = listOf("Мойка")
+
+        val autoCompleteTextView = AutoCompleteTextView(this).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            setText(prefill)
+            threshold = 1
+            setAdapter(
+                ArrayAdapter(
+                    this@TechniqueExpenseActivity,
+                    android.R.layout.simple_dropdown_item_1line,
+                    titleSuggestions
+                )
+            )
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -174,47 +190,13 @@ class TechniqueExpenseActivity : AppCompatActivity() {
             }
         }
 
-        row.addView(editText)
+        row.addView(autoCompleteTextView)
         row.addView(addButton)
         titlesContainer.addView(row)
     }
 
-    private fun saveTechnique() {
-        val recordType = spinnerTechniqueRecordType.selectedItem?.toString().orEmpty()
-        val titles = collectTitles()
-        val date = etTechniqueDate.text.toString().trim()
-        val mileage = etTechniqueMileage.text.toString().trim()
-        val quantity = etTechniqueQuantity.text.toString().trim()
-        val quantityUnit = spinnerQuantityUnit.selectedItem?.toString().orEmpty()
-        val rawAmount = etTechniqueAmount.text.toString().trim()
-        val comment = etTechniqueComment.text.toString().trim()
-
-        if (date.isEmpty() || rawAmount.isEmpty()) {
-            Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (titles.isEmpty()) {
-            Toast.makeText(this, R.string.message_add_one_title, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val normalizedAmount = normalizeAmount(rawAmount)
-        if (normalizedAmount == null) {
-            Toast.makeText(this, R.string.message_invalid_amount, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val draft = TechniqueExpenseDraft(
-            recordType = recordType,
-            titles = titles,
-            date = date,
-            mileage = mileage,
-            quantity = quantity,
-            quantityUnit = quantityUnit,
-            amount = normalizedAmount,
-            comment = comment
-        )
+    private fun saveTechniqueAndClose() {
+        val draft = buildTechniqueDraft() ?: return
 
         val resultIntent = Intent().apply {
             putExtra(MainActivity.EXTRA_TECHNIQUE_DRAFT, draft)
@@ -224,13 +206,90 @@ class TechniqueExpenseActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun saveTechniqueAndStay() {
+        val draft = buildTechniqueDraft() ?: return
+
+        val list = storage.loadTechniqueDrafts()
+        list.add(draft)
+        storage.saveTechniqueDrafts(list)
+
+        Toast.makeText(
+            this,
+            getString(
+                R.string.message_technique_saved_with_amount,
+                draft.amount,
+                list.size.toString()
+            ),
+            Toast.LENGTH_SHORT
+        ).show()
+
+        clearFieldsForNextTechnique()
+    }
+
+    private fun buildTechniqueDraft(): TechniqueExpenseDraft? {
+        val recordType = spinnerTechniqueRecordType.selectedItem?.toString().orEmpty()
+        val titles = collectTitles()
+        val date = etTechniqueDate.text.toString().trim()
+        val mileage = etTechniqueMileage.text.toString().trim()
+        val quantityUnit = spinnerQuantityUnit.selectedItem?.toString().orEmpty()
+        val quantityInput = etTechniqueQuantity.text.toString().trim()
+        val rawAmount = etTechniqueAmount.text.toString().trim()
+        val comment = etTechniqueComment.text.toString().trim()
+
+        if (date.isEmpty() || rawAmount.isEmpty()) {
+            Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
+            return null
+        }
+
+        if (titles.isEmpty()) {
+            Toast.makeText(this, R.string.message_add_one_title, Toast.LENGTH_SHORT).show()
+            return null
+        }
+
+        val normalizedAmount = normalizeAmount(rawAmount)
+        if (normalizedAmount == null) {
+            Toast.makeText(this, R.string.message_invalid_amount, Toast.LENGTH_SHORT).show()
+            return null
+        }
+
+        val normalizedQuantity = normalizeQuantity(quantityInput, quantityUnit)
+        if (normalizedQuantity == null) {
+            Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
+            return null
+        }
+
+        return TechniqueExpenseDraft(
+            recordType = recordType,
+            titles = titles,
+            date = date,
+            mileage = mileage,
+            quantity = normalizedQuantity,
+            quantityUnit = quantityUnit,
+            amount = normalizedAmount,
+            comment = comment
+        )
+    }
+
+    private fun clearFieldsForNextTechnique() {
+        titlesContainer.removeAllViews()
+        addTitleRow()
+
+        etTechniqueQuantity.text?.clear()
+        etTechniqueAmount.text?.clear()
+        etTechniqueComment.text?.clear()
+
+        val firstRow = titlesContainer.getChildAt(0) as? LinearLayout
+        val firstInput = firstRow?.getChildAt(0) as? AutoCompleteTextView
+        firstInput?.requestFocus()
+    }
+
     private fun collectTitles(): List<String> {
         val result = mutableListOf<String>()
 
         for (i in 0 until titlesContainer.childCount) {
             val row = titlesContainer.getChildAt(i) as LinearLayout
-            val editText = row.getChildAt(0) as EditText
-            val value = editText.text.toString().trim()
+            val input = row.getChildAt(0) as AutoCompleteTextView
+            val value = input.text.toString().trim()
             if (value.isNotEmpty()) {
                 result.add(value)
             }
@@ -246,6 +305,21 @@ class TechniqueExpenseActivity : AppCompatActivity() {
 
         val parsed = cleaned.toDoubleOrNull() ?: return null
         if (parsed < 0.0) return null
+
+        return cleaned
+    }
+
+    private fun normalizeQuantity(value: String, unit: String): String? {
+        val cleaned = value
+            .replace(" ", "")
+            .replace(",", ".")
+
+        if (cleaned.isBlank()) {
+            return if (unit == "шт") "1" else null
+        }
+
+        val parsed = cleaned.toDoubleOrNull() ?: return null
+        if (parsed <= 0.0) return null
 
         return cleaned
     }

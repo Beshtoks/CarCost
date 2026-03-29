@@ -17,23 +17,28 @@ import java.util.Locale
 
 class DocumentationExpenseActivity : AppCompatActivity() {
 
+    private lateinit var storage: AppStorage
+
     private lateinit var spinnerDocumentType: Spinner
     private lateinit var subtypeContainer: LinearLayout
     private lateinit var spinnerDocumentSubtype: Spinner
 
     private lateinit var etDocumentTitle: EditText
     private lateinit var etDocumentDate: EditText
-    private lateinit var etDocumentOdometer: EditText
     private lateinit var etDocumentValidUntil: EditText
+    private lateinit var etDocumentOdometer: EditText
     private lateinit var etDocumentAmount: EditText
     private lateinit var etDocumentComment: EditText
 
     private lateinit var btnDocumentationSave: Button
     private lateinit var btnDocumentationCancel: Button
+    private lateinit var btnDocumentationNext: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_documentation_expense)
+
+        storage = AppStorage(this)
 
         spinnerDocumentType = findViewById(R.id.spinnerDocumentType)
         subtypeContainer = findViewById(R.id.documentationSubtypeContainer)
@@ -41,20 +46,14 @@ class DocumentationExpenseActivity : AppCompatActivity() {
 
         etDocumentTitle = findViewById(R.id.etDocumentTitle)
         etDocumentDate = findViewById(R.id.etDocumentDate)
-        etDocumentOdometer = findViewById(R.id.etDocumentOdometer)
         etDocumentValidUntil = findViewById(R.id.etDocumentValidUntil)
+        etDocumentOdometer = findViewById(R.id.etDocumentOdometer)
         etDocumentAmount = findViewById(R.id.etDocumentAmount)
         etDocumentComment = findViewById(R.id.etDocumentComment)
 
         btnDocumentationSave = findViewById(R.id.btnDocumentationSave)
         btnDocumentationCancel = findViewById(R.id.btnDocumentationCancel)
-
-        etDocumentTitle.hint = null
-        etDocumentDate.hint = null
-        etDocumentOdometer.hint = null
-        etDocumentValidUntil.hint = null
-        etDocumentAmount.hint = null
-        etDocumentComment.hint = null
+        btnDocumentationNext = findViewById(R.id.btnDocumentationNext)
 
         setupDocumentTypeSpinner()
         setupDateField(etDocumentDate)
@@ -62,7 +61,11 @@ class DocumentationExpenseActivity : AppCompatActivity() {
         updateSubtypeVisibility()
 
         btnDocumentationSave.setOnClickListener {
-            saveDocumentation()
+            saveDocumentationAndClose()
+        }
+
+        btnDocumentationNext.setOnClickListener {
+            saveDocumentationAndStay()
         }
 
         btnDocumentationCancel.setOnClickListener {
@@ -170,7 +173,38 @@ class DocumentationExpenseActivity : AppCompatActivity() {
         return calendar
     }
 
-    private fun saveDocumentation() {
+    private fun saveDocumentationAndClose() {
+        val draft = buildDocumentationDraft() ?: return
+
+        val resultIntent = Intent().apply {
+            putExtra(MainActivity.EXTRA_DOCUMENTATION_DRAFT, draft)
+        }
+
+        setResult(Activity.RESULT_OK, resultIntent)
+        finish()
+    }
+
+    private fun saveDocumentationAndStay() {
+        val draft = buildDocumentationDraft() ?: return
+
+        val list = storage.loadDocumentationDrafts()
+        list.add(draft)
+        storage.saveDocumentationDrafts(list)
+
+        Toast.makeText(
+            this,
+            getString(
+                R.string.message_documentation_saved_with_amount,
+                draft.amount,
+                list.size.toString()
+            ),
+            Toast.LENGTH_SHORT
+        ).show()
+
+        clearFieldsForNextDocumentation()
+    }
+
+    private fun buildDocumentationDraft(): DocumentationExpenseDraft? {
         val type = spinnerDocumentType.selectedItem?.toString().orEmpty()
         val subtype = if (subtypeContainer.visibility == View.VISIBLE) {
             spinnerDocumentSubtype.selectedItem?.toString()
@@ -180,23 +214,23 @@ class DocumentationExpenseActivity : AppCompatActivity() {
 
         val title = etDocumentTitle.text.toString().trim()
         val date = etDocumentDate.text.toString().trim()
-        val odometer = etDocumentOdometer.text.toString().trim()
         val validUntilRaw = etDocumentValidUntil.text.toString().trim()
+        val odometer = etDocumentOdometer.text.toString().trim()
         val rawAmount = etDocumentAmount.text.toString().trim()
         val comment = etDocumentComment.text.toString().trim()
 
         if (date.isEmpty() || rawAmount.isEmpty()) {
             Toast.makeText(this, R.string.message_fill_required_fields, Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
         val normalizedAmount = normalizeAmount(rawAmount)
         if (normalizedAmount == null) {
             Toast.makeText(this, R.string.message_invalid_amount, Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
-        val draft = DocumentationExpenseDraft(
+        return DocumentationExpenseDraft(
             type = type,
             subtype = subtype,
             title = title,
@@ -206,13 +240,16 @@ class DocumentationExpenseActivity : AppCompatActivity() {
             amount = normalizedAmount,
             comment = comment
         )
+    }
 
-        val resultIntent = Intent().apply {
-            putExtra(MainActivity.EXTRA_DOCUMENTATION_DRAFT, draft)
-        }
+    private fun clearFieldsForNextDocumentation() {
+        etDocumentTitle.text?.clear()
+        etDocumentValidUntil.text?.clear()
+        etDocumentOdometer.text?.clear()
+        etDocumentAmount.text?.clear()
+        etDocumentComment.text?.clear()
 
-        setResult(Activity.RESULT_OK, resultIntent)
-        finish()
+        etDocumentTitle.requestFocus()
     }
 
     private fun normalizeAmount(value: String): String? {
