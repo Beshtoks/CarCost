@@ -1,13 +1,18 @@
 package com.carcost.app
 
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
+import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +23,7 @@ import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
+import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
@@ -478,10 +484,10 @@ class MainActivity : AppCompatActivity() {
 
         items.forEach { item ->
             val daysLeft = ChronoUnit.DAYS.between(today, item.targetDate).toInt()
-            addSoonRow(
-                container = containerSoonByDate,
+            addSoonDateRow(
                 title = item.title,
-                value = formatRemainingDate(daysLeft)
+                value = formatRemainingDate(daysLeft),
+                exactDate = item.targetDate
             )
         }
     }
@@ -519,8 +525,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         items.forEach { item ->
-            addSoonRow(
-                container = containerSoonByMileage,
+            addSoonMileageRow(
                 title = item.title,
                 value = formatRemainingMileage(item.remainingKm)
             )
@@ -553,12 +558,41 @@ class MainActivity : AppCompatActivity() {
         val textView = TextView(this).apply {
             this.text = text
             textSize = 14f
-            setTextColor(android.graphics.Color.BLACK)
+            setTextColor(Color.BLACK)
         }
         container.addView(textView)
     }
 
-    private fun addSoonRow(container: LinearLayout, title: String, value: String) {
+    private fun addSoonDateRow(title: String, value: String, exactDate: LocalDate) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(4), 0, dp(8))
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                showSoonDatePopup(this, formatExactSoonDate(exactDate))
+            }
+        }
+
+        val titleView = TextView(this).apply {
+            text = title
+            textSize = 14f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(Color.BLACK)
+        }
+
+        val valueView = TextView(this).apply {
+            text = value
+            textSize = 13f
+            setTextColor(Color.BLACK)
+        }
+
+        row.addView(titleView)
+        row.addView(valueView)
+        containerSoonByDate.addView(row)
+    }
+
+    private fun addSoonMileageRow(title: String, value: String) {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, dp(4), 0, dp(8))
@@ -568,18 +602,56 @@ class MainActivity : AppCompatActivity() {
             text = title
             textSize = 14f
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(android.graphics.Color.BLACK)
+            setTextColor(Color.BLACK)
         }
 
         val valueView = TextView(this).apply {
             text = value
             textSize = 13f
-            setTextColor(android.graphics.Color.BLACK)
+            setTextColor(Color.BLACK)
         }
 
         row.addView(titleView)
         row.addView(valueView)
-        container.addView(row)
+        containerSoonByMileage.addView(row)
+    }
+
+    private fun showSoonDatePopup(anchor: View, text: String) {
+        val popupText = TextView(this).apply {
+            this.text = text
+            setTextColor(Color.WHITE)
+            textSize = 13f
+            setPadding(dp(10), dp(6), dp(10), dp(6))
+            background = ColorDrawable(Color.parseColor("#CC000000"))
+        }
+
+        popupText.measure(
+            View.MeasureSpec.UNSPECIFIED,
+            View.MeasureSpec.UNSPECIFIED
+        )
+
+        val popup = PopupWindow(
+            popupText,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            false
+        ).apply {
+            isOutsideTouchable = true
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            elevation = dp(4).toFloat()
+        }
+
+        val popupWidth = popupText.measuredWidth
+        val popupHeight = popupText.measuredHeight
+        val xOff = (anchor.width - popupWidth) / 2
+        val yOff = -(anchor.height + popupHeight + dp(4))
+
+        popup.showAsDropDown(anchor, xOff, yOff, Gravity.START)
+        anchor.postDelayed({
+            if (popup.isShowing) {
+                popup.dismiss()
+            }
+        }, 1800)
     }
 
     private fun formatRemainingDate(daysLeft: Int): String {
@@ -602,6 +674,17 @@ class MainActivity : AppCompatActivity() {
 
         val months = (daysLeft / 30).coerceIn(4, 11)
         return getString(R.string.soon_more_than_months, months.toString())
+    }
+
+    private fun formatExactSoonDate(date: LocalDate): String {
+        val monthName = date.month.getDisplayName(TextStyle.FULL_STANDALONE, RUSSIAN_LOCALE)
+        return buildString {
+            append(date.dayOfMonth.toString().padStart(2, '0'))
+            append(' ')
+            append(monthName)
+            append(' ')
+            append(date.year)
+        }
     }
 
     private fun formatRemainingMileage(remainingKm: Long): String {
@@ -735,6 +818,8 @@ class MainActivity : AppCompatActivity() {
 
         private val BACKUP_FILE_DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatter.ofPattern("yyyy_MM_dd")
+
+        private val RUSSIAN_LOCALE = Locale("ru")
 
         private val FIXED_MILEAGE_NODES = listOf(
             "Масло",
