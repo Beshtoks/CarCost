@@ -256,13 +256,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showBackupMenu() {
+        val titleContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(16), dp(20), dp(0))
+        }
+
+        val titleView = TextView(this).apply {
+            text = "Резервная копия базы"
+            textSize = 18f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.parseColor("#FFA500"))
+            setPadding(0, 0, 0, dp(8))
+        }
+
+        val underlineView = View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(1)
+            )
+            setBackgroundColor(Color.WHITE)
+        }
+
+        titleContainer.addView(titleView)
+        titleContainer.addView(underlineView)
+
         val items = arrayOf(
             "Экспорт базы",
             "Импорт базы (полная замена)"
         )
 
         AlertDialog.Builder(this)
-            .setTitle("Резервная копия базы")
+            .setCustomTitle(titleContainer)
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> exportBackupLauncher.launch(buildBackupFileName())

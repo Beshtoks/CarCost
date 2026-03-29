@@ -14,6 +14,7 @@ class JournalAdapter(
 ) : BaseAdapter() {
 
     private val inflater = LayoutInflater.from(context)
+    private val appContext = context.applicationContext
 
     override fun getCount(): Int = items.size
 
@@ -56,14 +57,18 @@ class JournalAdapter(
         val tvTitle = view.findViewById<TextView>(R.id.tvJournalItemTitle)
         val tvAmount = view.findViewById<TextView>(R.id.tvJournalItemAmount)
 
+        val incomeCode = appContext.getString(R.string.journal_type_income_short)
+        val documentationCode = appContext.getString(R.string.journal_type_documentation_short)
+        val techniqueCode = appContext.getString(R.string.journal_type_technique_short)
+
         val shortType = when (item.typeCode) {
-            "ДОК" -> "ДК"
-            "ТЕХ" -> "ТХ"
-            "ДОХ" -> "ДХ"
+            documentationCode -> "ДК"
+            techniqueCode -> "ТХ"
+            incomeCode -> "ДК"
             else -> item.typeCode
         }
 
-        val isIncome = item.typeCode == "ДОХ"
+        val isIncome = item.typeCode == incomeCode
 
         val textColor = if (isIncome) {
             Color.parseColor("#A5D6A7")
