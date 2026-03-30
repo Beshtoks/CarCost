@@ -7,6 +7,503 @@
     android:fitsSystemWindows="true">
 
     <LinearLayout
+        android:id="@+id/mainContent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <LinearLayout
+                android:id="@+id/cardTopMileage"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_top_card"
+                android:gravity="center_horizontal|top"
+                android:orientation="vertical"
+                android:paddingStart="6dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="6dp">
+
+                <TextView
+                    android:id="@+id/tvMileageTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/top_mileage"
+                    android:textAlignment="center"
+                    android:textColor="@color/top_card_title"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvMileageValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="76 006 км"
+                    android:textColor="@color/top_card_value"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardTopIncome"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_action_green"
+                android:gravity="center_horizontal|top"
+                android:orientation="vertical"
+                android:paddingStart="6dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="6dp">
+
+                <TextView
+                    android:id="@+id/tvTopIncomeTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/top_salary"
+                    android:textAlignment="center"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvTopIncomeValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="0 €"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardTopFuel"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_top_card"
+                android:gravity="center_horizontal|top"
+                android:orientation="vertical"
+                android:paddingStart="6dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="6dp">
+
+                <TextView
+                    android:id="@+id/tvFuelTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/top_fuel_price"
+                    android:textAlignment="center"
+                    android:textColor="@color/top_card_title"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvFuelValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="1.62 €"
+                    android:textColor="@color/top_card_value"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:layout_marginTop="12dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <LinearLayout
+                android:id="@+id/cardIncome"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_card_income"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvIncomeCardTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/income_title"
+                    android:textAlignment="center"
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvIncomeMonthLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/month"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvIncomeMonthValue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:text="0 €"
+                        android:textColor="@android:color/black"
+                        android:textStyle="bold"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="22sp"
+                        android:autoSizeStepGranularity="1sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#33000000" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvIncomeYearLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/year"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvIncomeYearValue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:text="0 €"
+                        android:textColor="@android:color/black"
+                        android:textStyle="bold"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="22sp"
+                        android:autoSizeStepGranularity="1sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardExpense"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_card_expense"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvExpenseCardTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/expense_title"
+                    android:textAlignment="center"
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvExpenseMonthLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/month"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvExpenseMonthValue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:text="0 €"
+                        android:textColor="@android:color/black"
+                        android:textStyle="bold"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="22sp"
+                        android:autoSizeStepGranularity="1sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#33000000" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvExpenseYearLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/year"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvExpenseYearValue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:text="0 €"
+                        android:textColor="@android:color/black"
+                        android:textStyle="bold"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="22sp"
+                        android:autoSizeStepGranularity="1sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cardCost"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card_purple"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp">
+
+            <TextView
+                android:id="@+id/tvCostTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/cost_title"
+                android:textAlignment="center"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvCostPerDayValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@android:color/black"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#33000000" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvCostPerKmValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@android:color/black"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cardSoon"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="12dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_card_soon"
+            android:minHeight="260dp"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvSoonTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/soon_title"
+                android:textAlignment="center"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvSoonDateTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/soon_by_date"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_weight="1"
+                        android:scrollbars="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/containerSoonByDate"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+                    </ScrollView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvSoonMileageTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/soon_by_mileage"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_weight="1"
+                        android:scrollbars="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/containerSoonByMileage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+                    </ScrollView>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/bottomActionBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -49,508 +546,5 @@
             android:textStyle="bold"
             app:backgroundTint="@null" />
     </LinearLayout>
-
-    <ScrollView
-        android:id="@+id/mainScroll"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fillViewport="true"
-        app:layout_constraintBottom_toTopOf="@id/bottomActionBar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:baselineAligned="false"
-                android:orientation="horizontal"
-                android:weightSum="3">
-
-                <LinearLayout
-                    android:id="@+id/cardTopMileage"
-                    android:layout_width="0dp"
-                    android:layout_height="64dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_top_card"
-                    android:gravity="center_horizontal|top"
-                    android:orientation="vertical"
-                    android:paddingStart="6dp"
-                    android:paddingTop="8dp"
-                    android:paddingEnd="6dp"
-                    android:paddingBottom="6dp">
-
-                    <TextView
-                        android:id="@+id/tvMileageTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/top_mileage"
-                        android:textAlignment="center"
-                        android:textColor="@color/top_card_title"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvMileageValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="76 006 км"
-                        android:textColor="@color/top_card_value"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/cardTopIncome"
-                    android:layout_width="0dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_action_green"
-                    android:gravity="center_horizontal|top"
-                    android:orientation="vertical"
-                    android:paddingStart="6dp"
-                    android:paddingTop="8dp"
-                    android:paddingEnd="6dp"
-                    android:paddingBottom="6dp">
-
-                    <TextView
-                        android:id="@+id/tvTopIncomeTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/top_salary"
-                        android:textAlignment="center"
-                        android:textColor="@android:color/white"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvTopIncomeValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="0 €"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/cardTopFuel"
-                    android:layout_width="0dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_top_card"
-                    android:gravity="center_horizontal|top"
-                    android:orientation="vertical"
-                    android:paddingStart="6dp"
-                    android:paddingTop="8dp"
-                    android:paddingEnd="6dp"
-                    android:paddingBottom="6dp">
-
-                    <TextView
-                        android:id="@+id/tvFuelTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/top_fuel_price"
-                        android:textAlignment="center"
-                        android:textColor="@color/top_card_title"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvFuelValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="1.62 €"
-                        android:textColor="@color/top_card_value"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:layout_marginTop="12dp"
-                android:baselineAligned="false"
-                android:orientation="horizontal"
-                android:weightSum="2">
-
-                <LinearLayout
-                    android:id="@+id/cardIncome"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_income"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:id="@+id/tvIncomeCardTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/income_title"
-                        android:textAlignment="center"
-                        android:textColor="@android:color/black"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvIncomeMonthLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/month"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvIncomeMonthValue"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:maxLines="1"
-                            android:text="0 €"
-                            android:textColor="@android:color/black"
-                            android:textStyle="bold"
-                            android:autoSizeTextType="uniform"
-                            android:autoSizeMinTextSize="12sp"
-                            android:autoSizeMaxTextSize="22sp"
-                            android:autoSizeStepGranularity="1sp" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#33000000" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvIncomeYearLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/year"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvIncomeYearValue"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:maxLines="1"
-                            android:text="0 €"
-                            android:textColor="@android:color/black"
-                            android:textStyle="bold"
-                            android:autoSizeTextType="uniform"
-                            android:autoSizeMinTextSize="12sp"
-                            android:autoSizeMaxTextSize="22sp"
-                            android:autoSizeStepGranularity="1sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/cardExpense"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_expense"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:id="@+id/tvExpenseCardTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/expense_title"
-                        android:textAlignment="center"
-                        android:textColor="@android:color/black"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvExpenseMonthLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/month"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvExpenseMonthValue"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:maxLines="1"
-                            android:text="0 €"
-                            android:textColor="@android:color/black"
-                            android:textStyle="bold"
-                            android:autoSizeTextType="uniform"
-                            android:autoSizeMinTextSize="12sp"
-                            android:autoSizeMaxTextSize="22sp"
-                            android:autoSizeStepGranularity="1sp" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#33000000" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvExpenseYearLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/year"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvExpenseYearValue"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:maxLines="1"
-                            android:text="0 €"
-                            android:textColor="@android:color/black"
-                            android:textStyle="bold"
-                            android:autoSizeTextType="uniform"
-                            android:autoSizeMinTextSize="12sp"
-                            android:autoSizeMaxTextSize="22sp"
-                            android:autoSizeStepGranularity="1sp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/cardCost"
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_card_purple"
-                android:orientation="vertical"
-                android:paddingStart="12dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="10dp">
-
-                <TextView
-                    android:id="@+id/tvCostTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/cost_title"
-                    android:textAlignment="center"
-                    android:textColor="@android:color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_weight="1"
-                    android:baselineAligned="false"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tvCostPerDayValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="—"
-                            android:textColor="@android:color/black"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:background="#33000000" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tvCostPerKmValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="—"
-                            android:textColor="@android:color/black"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/cardSoon"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="12dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_soon"
-                android:minHeight="260dp"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <TextView
-                    android:id="@+id/tvSoonTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/soon_title"
-                    android:textAlignment="center"
-                    android:textColor="@android:color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_weight="1"
-                    android:baselineAligned="false"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tvSoonDateTitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="@string/soon_by_date"
-                            android:textAlignment="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <ScrollView
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginTop="8dp"
-                            android:layout_weight="1"
-                            android:scrollbars="vertical">
-
-                            <LinearLayout
-                                android:id="@+id/containerSoonByDate"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical" />
-                        </ScrollView>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tvSoonMileageTitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="@string/soon_by_mileage"
-                            android:textAlignment="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <ScrollView
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginTop="8dp"
-                            android:layout_weight="1"
-                            android:scrollbars="vertical">
-
-                            <LinearLayout
-                                android:id="@+id/containerSoonByMileage"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical" />
-                        </ScrollView>
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-
-        </LinearLayout>
-    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
