@@ -35,6 +35,7 @@ class IncomeEntryActivity : AppCompatActivity() {
 
     private var isEditMode: Boolean = false
     private var originalDraft: IncomeDraft? = null
+    private var isRestoringForm: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +58,7 @@ class IncomeEntryActivity : AppCompatActivity() {
         btnIncomeDelete = findViewById(R.id.btnIncomeDelete)
 
         isEditMode = intent.getBooleanExtra(EXTRA_EDIT_MODE, false)
+        @Suppress("DEPRECATION")
         originalDraft = intent.getSerializableExtra(EXTRA_ORIGINAL_DRAFT) as? IncomeDraft
 
         setupIncomeTypeSpinner()
@@ -107,15 +109,19 @@ class IncomeEntryActivity : AppCompatActivity() {
         spinnerIncomeType.adapter = typeAdapter
 
         spinnerIncomeType.onItemSelectedListener = SimpleItemSelectedListener {
-            updateSubtypeVisibility()
+            if (!isRestoringForm) {
+                updateSubtypeVisibility()
+            }
         }
     }
 
     private fun fillFormFromDraft(draft: IncomeDraft) {
+        isRestoringForm = true
+
         val incomeTypes = resources.getStringArray(R.array.income_types)
         val typeIndex = incomeTypes.indexOfFirst { it == draft.type }
         if (typeIndex >= 0) {
-            spinnerIncomeType.setSelection(typeIndex)
+            spinnerIncomeType.setSelection(typeIndex, false)
         }
 
         updateSubtypeVisibility()
@@ -124,18 +130,22 @@ class IncomeEntryActivity : AppCompatActivity() {
             val adapter = spinnerIncomeSubtype.adapter as? ArrayAdapter<*>
             if (adapter != null) {
                 for (i in 0 until adapter.count) {
-                    if (adapter.getItem(i)?.toString() == draft.subtype) {
-                        spinnerIncomeSubtype.setSelection(i)
+                    if (adapter.getItem(i)?.toString()?.trim() == draft.subtype.trim()) {
+                        spinnerIncomeSubtype.setSelection(i, false)
                         break
                     }
                 }
             }
+        } else if (subtypeContainer.visibility == View.VISIBLE) {
+            spinnerIncomeSubtype.setSelection(0, false)
         }
 
         etIncomeTitle.setText(draft.title)
         etIncomeDate.setText(draft.date)
         etIncomeAmount.setText(draft.amount)
         etIncomeComment.setText(draft.comment)
+
+        isRestoringForm = false
     }
 
     private fun updateSubtypeVisibility() {
@@ -166,6 +176,10 @@ class IncomeEntryActivity : AppCompatActivity() {
         )
         subtypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerIncomeSubtype.adapter = subtypeAdapter
+
+        if (!isEditMode) {
+            spinnerIncomeSubtype.setSelection(0, false)
+        }
     }
 
     private fun setupDateField(editText: EditText) {
@@ -331,7 +345,7 @@ class IncomeEntryActivity : AppCompatActivity() {
     private fun buildIncomeDraft(): IncomeDraft? {
         val type = spinnerIncomeType.selectedItem?.toString().orEmpty()
         val subtype = if (subtypeContainer.visibility == View.VISIBLE) {
-            spinnerIncomeSubtype.selectedItem?.toString()
+            spinnerIncomeSubtype.selectedItem?.toString()?.trim()?.ifEmpty { null }
         } else {
             null
         }
@@ -367,6 +381,9 @@ class IncomeEntryActivity : AppCompatActivity() {
         etIncomeAmount.text?.clear()
         etIncomeComment.text?.clear()
         etIncomeTitle.requestFocus()
+        if (subtypeContainer.visibility == View.VISIBLE) {
+            spinnerIncomeSubtype.setSelection(0, false)
+        }
     }
 
     private fun normalizeAmount(value: String): String? {

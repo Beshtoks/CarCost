@@ -98,42 +98,43 @@
     <string name="journal_type_technique_short">ТЕХ</string>
 
     <string-array name="income_types">
-        <item>Агрегаторы</item>
+        <item>Агрегатор</item>
         <item>Терминал</item>
         <item>Наличные</item>
         <item>Переводы</item>
         <item>Прочее</item>
-        <item>Финансирование</item>
     </string-array>
 
     <string-array name="income_subtypes_aggregators">
+        <item></item>
         <item>Bolt</item>
         <item>RedCab</item>
-        <item>TaxiLV</item>
         <item>Forus</item>
     </string-array>
 
     <string-array name="income_subtypes_transfers">
+        <item></item>
         <item>Частное лицо</item>
         <item>Компания</item>
     </string-array>
 
     <string-array name="documentation_types">
         <item>Лицензия</item>
-        <item>Налоги</item>
+        <item>Налог</item>
         <item>Банковские расходы</item>
         <item>Бухгалтерия</item>
-        <item>Разрешения</item>
+        <item>Разрешение</item>
         <item>Страхование</item>
-        <item>Парковки</item>
-        <item>Сервисы</item>
-        <item>Штрафы</item>
-        <item>Пропуски</item>
+        <item>Парковка</item>
+        <item>Сервис</item>
+        <item>Штраф</item>
+        <item>Пропуск</item>
         <item>Кредит</item>
         <item>Прочее</item>
     </string-array>
 
     <string-array name="documentation_subtypes_license">
+        <item></item>
         <item>Компания</item>
         <item>Рига</item>
         <item>Районная</item>
@@ -142,25 +143,30 @@
     </string-array>
 
     <string-array name="documentation_subtypes_taxes">
+        <item></item>
         <item>Социальный</item>
         <item>Дорожный</item>
         <item>Транспортная дирекция</item>
-        <item>Налоговый депозит</item>
         <item>Другое</item>
     </string-array>
 
     <string-array name="documentation_subtypes_banking">
+        <item></item>
         <item>Обслуживание счёта</item>
-        <item>Комиссии</item>
+        <item>Комиссия</item>
         <item>Переводы</item>
     </string-array>
 
     <string-array name="documentation_subtypes_accounting">
+        <item></item>
+        <item>LKS BIROJS SIA</item>
         <item>Ежемесячное обслуживание</item>
         <item>Годовой отчёт</item>
     </string-array>
 
     <string-array name="documentation_subtypes_permissions">
+        <item></item>
+        <item>Техосмотр</item>
         <item>Медкомиссия</item>
         <item>Водительские права</item>
         <item>ATD Aplieciba</item>
@@ -168,34 +174,40 @@
     </string-array>
 
     <string-array name="documentation_subtypes_insurance">
+        <item></item>
         <item>OCTA</item>
         <item>КАСКО</item>
         <item>Прочее</item>
     </string-array>
 
     <string-array name="documentation_subtypes_parking">
+        <item></item>
         <item>Mobilly</item>
-        <item>Платная стоянка / абонемент</item>
+        <item>Стоянка / Абонемент</item>
     </string-array>
 
     <string-array name="documentation_subtypes_services">
-        <item>GPS (GSM APSARDZE SIA)</item>
+        <item></item>
+        <item>GSM APSARDZE SIA</item>
+        <item>Z Technologies SIA</item>
         <item>Прочие сервисы</item>
     </string-array>
 
     <string-array name="documentation_subtypes_fines">
+        <item></item>
         <item>Парковка</item>
-        <item>ПДД</item>
-        <item>Авария</item>
+        <item>ДТП</item>
         <item>Прочее</item>
     </string-array>
 
     <string-array name="documentation_subtypes_passes">
+        <item></item>
         <item>Юрмала</item>
         <item>Прочее</item>
     </string-array>
 
     <string-array name="documentation_subtypes_credit">
+        <item></item>
         <item>Платёж по кредиту</item>
         <item>Погашение</item>
         <item>Прочее</item>

@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -21,6 +22,8 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.IOException
 import java.text.NumberFormat
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.time.format.TextStyle
@@ -193,9 +196,17 @@ class MainActivity : AppCompatActivity() {
             showFuelInputDialog()
         }
 
+        cardIncome.setOnClickListener {
+            showIncomeHistoryDialog()
+        }
+
         cardIncome.setOnLongClickListener {
             startActivity(Intent(this, JournalActivity::class.java))
             true
+        }
+
+        cardExpense.setOnClickListener {
+            showExpenseHistoryDialog()
         }
 
         cardExpense.setOnLongClickListener {
@@ -307,7 +318,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildBackupFileName(): String {
-        return "carcost_backup_${LocalDate.now().format(BACKUP_FILE_DATE_FORMATTER)}.json"
+        return "CC_Backup_${LocalDateTime.now().format(BACKUP_FILE_DATE_TIME_FORMATTER)}.json"
     }
 
     private fun exportBackupToUri(uri: Uri) {
@@ -485,6 +496,88 @@ class MainActivity : AppCompatActivity() {
         tvCostPerKmValue.text = "${formatMoney(totalCostPerKm)} / км"
     }
 
+    private fun showIncomeHistoryDialog() {
+        val lines = buildIncomeHistoryLines()
+        showHistoryDialog("История доходов", lines)
+    }
+
+    private fun showExpenseHistoryDialog() {
+        val lines = buildExpenseHistoryLines()
+        showHistoryDialog("История расходов", lines)
+    }
+
+    private fun showHistoryDialog(title: String, lines: List<String>) {
+        if (lines.isEmpty()) {
+            Toast.makeText(this, "Нет данных для истории", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            lines
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setAdapter(adapter, null)
+            .setNegativeButton("Закрыть", null)
+            .show()
+    }
+
+    private fun buildIncomeHistoryLines(): List<String> {
+        val grouped = incomeDrafts
+            .mapNotNull { draft ->
+                val date = parseDraftDate(draft.date) ?: return@mapNotNull null
+                YearMonth.of(date.year, date.monthValue) to parseAmount(draft.amount)
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { entry -> entry.value.sum() }
+
+        return buildHistoryLines(grouped)
+    }
+
+    private fun buildExpenseHistoryLines(): List<String> {
+        val documentation = documentationExpenseDrafts.mapNotNull { draft ->
+            val date = parseDraftDate(draft.date) ?: return@mapNotNull null
+            YearMonth.of(date.year, date.monthValue) to parseAmount(draft.amount)
+        }
+
+        val technique = techniqueExpenseDrafts.mapNotNull { draft ->
+            val date = parseDraftDate(draft.date) ?: return@mapNotNull null
+            YearMonth.of(date.year, date.monthValue) to parseAmount(draft.amount)
+        }
+
+        val grouped = (documentation + technique)
+            .groupBy({ it.first }, { it.second })
+            .mapValues { entry -> entry.value.sum() }
+
+        return buildHistoryLines(grouped)
+    }
+
+    private fun buildHistoryLines(monthMap: Map<YearMonth, Double>): List<String> {
+        if (monthMap.isEmpty()) return emptyList()
+
+        val years = monthMap.keys.map { it.year }.distinct().sortedDescending()
+        val result = mutableListOf<String>()
+
+        years.forEach { year ->
+            val months = monthMap.keys
+                .filter { it.year == year }
+                .sortedByDescending { it.monthValue }
+
+            months.forEach { yearMonth ->
+                val amount = monthMap[yearMonth] ?: 0.0
+                result.add("${yearMonth.monthValue} — ${formatMoney(amount)}")
+            }
+
+            val yearTotal = months.sumOf { yearMonth -> monthMap[yearMonth] ?: 0.0 }
+            result.add("$year — ${formatMoney(yearTotal)}")
+        }
+
+        return result
+    }
+
     private fun buildOdometerPoints(): List<OdometerPoint> {
         val points = mutableListOf<OdometerPoint>()
 
@@ -621,6 +714,7 @@ class MainActivity : AppCompatActivity() {
             .mapNotNull { draft ->
                 val validUntil = draft.validUntil ?: return@mapNotNull null
                 val validDate = parseDraftDate(validUntil) ?: return@mapNotNull null
+                if (validDate.isBefore(today)) return@mapNotNull null
 
                 SoonDateItem(
                     title = buildDocumentationTitle(draft),
@@ -666,6 +760,7 @@ class MainActivity : AppCompatActivity() {
             val installMileage = latestReplacement.mileage.toLongOrNull() ?: return@mapNotNull null
 
             val remaining = interval - (currentMileage - installMileage)
+            if (remaining < 0L) return@mapNotNull null
 
             SoonMileageItem(
                 title = nodeName,
@@ -1016,8 +1111,8 @@ class MainActivity : AppCompatActivity() {
             DateTimeFormatter.ofPattern("dd.MM.uuuu")
                 .withResolverStyle(ResolverStyle.STRICT)
 
-        private val BACKUP_FILE_DATE_FORMATTER: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("yyyy_MM_dd")
+        private val BACKUP_FILE_DATE_TIME_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("dd-MM_HH_mm")
 
         private val RUSSIAN_LOCALE = Locale("ru")
 

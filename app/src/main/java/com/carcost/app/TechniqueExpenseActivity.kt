@@ -41,6 +41,11 @@ class TechniqueExpenseActivity : AppCompatActivity() {
 
     private var isEditMode: Boolean = false
     private var originalDraft: TechniqueExpenseDraft? = null
+    private var switchSourceDocumentationDraft: DocumentationExpenseDraft? = null
+    private var prefillTechniqueDraft: TechniqueExpenseDraft? = null
+
+    private val isSwitchMode: Boolean
+        get() = switchSourceDocumentationDraft != null && prefillTechniqueDraft != null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,31 +70,42 @@ class TechniqueExpenseActivity : AppCompatActivity() {
 
         isEditMode = intent.getBooleanExtra(EXTRA_EDIT_MODE, false)
         originalDraft = intent.getSerializableExtra(EXTRA_ORIGINAL_DRAFT) as? TechniqueExpenseDraft
+        switchSourceDocumentationDraft = intent.getSerializableExtra(EXTRA_SWITCH_SOURCE_DOCUMENTATION_DRAFT) as? DocumentationExpenseDraft
+        prefillTechniqueDraft = intent.getSerializableExtra(EXTRA_PREFILL_TECHNIQUE_DRAFT) as? TechniqueExpenseDraft
 
         setupSpinners()
         setupDateField(etTechniqueDate)
 
-        if (isEditMode && originalDraft != null) {
-            fillFormFromDraft(originalDraft!!)
-            btnTechniqueDelete.visibility = View.VISIBLE
-        } else {
-            addTitleRow()
-            btnTechniqueDelete.visibility = View.GONE
+        when {
+            isSwitchMode -> {
+                fillFormFromDraft(prefillTechniqueDraft!!)
+                btnTechniqueDelete.visibility = View.GONE
+                btnTechniqueNext.text = "Документация"
+            }
+            isEditMode && originalDraft != null -> {
+                fillFormFromDraft(prefillTechniqueDraft ?: originalDraft!!)
+                btnTechniqueDelete.visibility = View.VISIBLE
+                btnTechniqueNext.text = "Документация"
+            }
+            else -> {
+                addTitleRow()
+                btnTechniqueDelete.visibility = View.GONE
+                btnTechniqueNext.text = "Следующий"
+            }
         }
 
         btnTechniqueSave.setOnClickListener {
-            if (isEditMode) {
-                updateTechniqueAndClose()
-            } else {
-                saveTechniqueAndClose()
+            when {
+                isSwitchMode -> saveSwitchedTechniqueAndClose()
+                isEditMode -> updateTechniqueAndClose()
+                else -> saveTechniqueAndClose()
             }
         }
 
         btnTechniqueNext.setOnClickListener {
-            if (isEditMode) {
-                updateTechniqueAndStay()
-            } else {
-                saveTechniqueAndStay()
+            when {
+                isSwitchMode || isEditMode -> switchToDocumentation()
+                else -> saveTechniqueAndStay()
             }
         }
 
@@ -283,6 +299,38 @@ class TechniqueExpenseActivity : AppCompatActivity() {
         clearFieldsForNextTechnique()
     }
 
+    private fun saveSwitchedTechniqueAndClose() {
+        val switchedDraft = buildTechniqueDraft() ?: return
+        val sourceDocumentationDraft = switchSourceDocumentationDraft ?: return
+
+        val documentationList = storage.loadDocumentationDrafts()
+        val documentationIndex = documentationList.indexOfFirst {
+            it.type == sourceDocumentationDraft.type &&
+                    it.subtype == sourceDocumentationDraft.subtype &&
+                    it.title == sourceDocumentationDraft.title &&
+                    it.date == sourceDocumentationDraft.date &&
+                    it.odometer == sourceDocumentationDraft.odometer &&
+                    it.validUntil == sourceDocumentationDraft.validUntil &&
+                    it.amount == sourceDocumentationDraft.amount &&
+                    it.comment == sourceDocumentationDraft.comment
+        }
+
+        if (documentationIndex < 0) {
+            Toast.makeText(this, "Не удалось найти исходную запись Документация", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val techniqueList = storage.loadTechniqueDrafts()
+        documentationList.removeAt(documentationIndex)
+        techniqueList.add(switchedDraft)
+
+        storage.saveDocumentationDrafts(documentationList)
+        storage.saveTechniqueDrafts(techniqueList)
+
+        Toast.makeText(this, "Тип записи изменён на Техника", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
     private fun updateTechniqueAndClose() {
         val updated = buildTechniqueDraft() ?: return
         val original = originalDraft ?: return
@@ -365,6 +413,45 @@ class TechniqueExpenseActivity : AppCompatActivity() {
 
         Toast.makeText(this, "Запись удалена", Toast.LENGTH_SHORT).show()
         finish()
+    }
+
+    private fun switchToDocumentation() {
+        val documentationDraft = buildDocumentationDraftForSwitch() ?: return
+        val sourceTechnique = if (isSwitchMode) null else originalDraft
+        val sourceDocumentation = switchSourceDocumentationDraft
+
+        val intent = Intent(this, DocumentationExpenseActivity::class.java).apply {
+            when {
+                sourceTechnique != null -> {
+                    putExtra(DocumentationExpenseActivity.EXTRA_SWITCH_SOURCE_TECHNIQUE_DRAFT, sourceTechnique)
+                    putExtra(DocumentationExpenseActivity.EXTRA_PREFILL_DOCUMENTATION_DRAFT, documentationDraft)
+                }
+                sourceDocumentation != null -> {
+                    putExtra(DocumentationExpenseActivity.EXTRA_EDIT_MODE, true)
+                    putExtra(DocumentationExpenseActivity.EXTRA_ORIGINAL_DRAFT, sourceDocumentation)
+                    putExtra(DocumentationExpenseActivity.EXTRA_PREFILL_DOCUMENTATION_DRAFT, documentationDraft)
+                }
+            }
+        }
+
+        startActivity(intent)
+        finish()
+    }
+
+    private fun buildDocumentationDraftForSwitch(): DocumentationExpenseDraft? {
+        val techniqueDraft = buildTechniqueDraft() ?: return null
+        val defaultType = resources.getStringArray(R.array.documentation_types).lastOrNull().orEmpty()
+
+        return DocumentationExpenseDraft(
+            type = defaultType,
+            subtype = null,
+            title = techniqueDraft.titles.joinToString(", "),
+            date = techniqueDraft.date,
+            odometer = techniqueDraft.mileage,
+            validUntil = null,
+            amount = techniqueDraft.amount,
+            comment = techniqueDraft.comment
+        )
     }
 
     private fun buildTechniqueDraft(): TechniqueExpenseDraft? {
@@ -472,5 +559,7 @@ class TechniqueExpenseActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_EDIT_MODE = "extra_edit_mode"
         const val EXTRA_ORIGINAL_DRAFT = "extra_original_draft"
+        const val EXTRA_SWITCH_SOURCE_DOCUMENTATION_DRAFT = "extra_switch_source_documentation_draft"
+        const val EXTRA_PREFILL_TECHNIQUE_DRAFT = "extra_prefill_technique_draft"
     }
 }

@@ -69,11 +69,22 @@ class JournalAdapter(
         }
 
         val isIncome = item.typeCode == incomeCode
+        val isTechnique = item.typeCode == techniqueCode
 
-        val textColor = if (isIncome) {
-            Color.parseColor("#A5D6A7")
+        val defaultExpenseColor = Color.parseColor("#F5B7B1")
+        val incomeColor = Color.parseColor("#A5D6A7")
+        val techniqueInfoColor = Color.parseColor("#FFE4C4")
+
+        val dateAndAmountColor = if (isIncome) {
+            incomeColor
         } else {
-            Color.parseColor("#F5B7B1")
+            defaultExpenseColor
+        }
+
+        val typeAndTitleColor = when {
+            isIncome -> incomeColor
+            isTechnique -> techniqueInfoColor
+            else -> defaultExpenseColor
         }
 
         tvDate.text = item.displayDate
@@ -81,10 +92,10 @@ class JournalAdapter(
         tvTitle.text = item.shortTitle
         tvAmount.text = "${item.amount} €"
 
-        tvDate.setTextColor(textColor)
-        tvType.setTextColor(textColor)
-        tvTitle.setTextColor(textColor)
-        tvAmount.setTextColor(textColor)
+        tvDate.setTextColor(dateAndAmountColor)
+        tvAmount.setTextColor(dateAndAmountColor)
+        tvType.setTextColor(typeAndTitleColor)
+        tvTitle.setTextColor(typeAndTitleColor)
 
         return view
     }
