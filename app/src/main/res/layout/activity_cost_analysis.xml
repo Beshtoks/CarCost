@@ -2,70 +2,67 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_background"
-    android:fillViewport="true"
-    android:fitsSystemWindows="true">
+    android:background="@color/screen_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="16dp">
-
-        <TextView
-            android:id="@+id/tvCostAnalysisTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Анализ себестоимости"
-            android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:text="Период от"
-            android:textColor="@android:color/white"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/etDateFrom"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:inputType="date" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="Период до"
-            android:textColor="@android:color/white"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/etDateTo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:inputType="date" />
-
-        <Button
-            android:id="@+id/btnApplyPeriod"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Показать расчёт"
-            android:textAllCaps="false" />
+        android:padding="14dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_top_card"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Период анализа"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etDateFrom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@android:drawable/edit_text"
+                android:focusable="false"
+                android:hint="Дата от"
+                android:inputType="none"
+                android:padding="12dp"
+                android:textColor="@android:color/black"
+                android:textColorHint="#66000000" />
+
+            <EditText
+                android:id="@+id/etDateTo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@android:drawable/edit_text"
+                android:focusable="false"
+                android:hint="Дата до"
+                android:inputType="none"
+                android:padding="12dp"
+                android:textColor="@android:color/black"
+                android:textColorHint="#66000000" />
+
+            <Button
+                android:id="@+id/btnApplyPeriod"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Применить" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
             android:background="@drawable/bg_top_card"
             android:orientation="vertical"
             android:padding="14dp">
@@ -143,6 +140,54 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
+            android:background="@drawable/bg_top_card"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Средние показатели"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Средний доход в день"
+                android:textColor="@android:color/black"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIncomePerDayValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Средний расход в день"
+                android:textColor="@android:color/black"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvExpensePerDayAvgValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- ОБНОВЛЁННЫЙ БЛОК РАСХОДОВ (БЕЗ ДУБЛЯ "СРЕДНИЕ В ДЕНЬ") -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
             android:background="@drawable/bg_card_expense"
             android:orientation="vertical"
             android:padding="14dp">
@@ -165,21 +210,6 @@
 
             <TextView
                 android:id="@+id/tvExpenseTotalValue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Средние расходы в день"
-                android:textColor="@android:color/black"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvExpensePerDayValue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/black"

@@ -29,6 +29,7 @@ import java.time.format.ResolverStyle
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlin.math.roundToLong
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,6 +44,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvMileageValue: TextView
     private lateinit var tvFuelValue: TextView
     private lateinit var tvTopIncomeValue: TextView
+
+    private lateinit var tvIncomeMonthLabel: TextView
+    private lateinit var tvIncomeYearLabel: TextView
+    private lateinit var tvExpenseMonthLabel: TextView
+    private lateinit var tvExpenseYearLabel: TextView
 
     private lateinit var tvIncomeMonthValue: TextView
     private lateinit var tvIncomeYearValue: TextView
@@ -167,6 +173,11 @@ class MainActivity : AppCompatActivity() {
         tvFuelValue = findViewById(R.id.tvFuelValue)
         tvTopIncomeValue = findViewById(R.id.tvTopIncomeValue)
 
+        tvIncomeMonthLabel = findViewById(R.id.tvIncomeMonthLabel)
+        tvIncomeYearLabel = findViewById(R.id.tvIncomeYearLabel)
+        tvExpenseMonthLabel = findViewById(R.id.tvExpenseMonthLabel)
+        tvExpenseYearLabel = findViewById(R.id.tvExpenseYearLabel)
+
         tvIncomeMonthValue = findViewById(R.id.tvIncomeMonthValue)
         tvIncomeYearValue = findViewById(R.id.tvIncomeYearValue)
         tvExpenseMonthValue = findViewById(R.id.tvExpenseMonthValue)
@@ -237,6 +248,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshScreen() {
+        updatePeriodLabels()
         updateAutoStartMileage()
         updateIncomeValues()
         updateExpenseValues()
@@ -271,6 +283,77 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.fuel_value_format, fuel)
         }
+    }
+
+    private fun updatePeriodLabels() {
+        val today = LocalDate.now()
+        val yearAgo = today.minusDays(365)
+
+        val monthLabel = buildCurrentMonthLabel(today)
+        val yearLabel = buildYearRangeLabel(yearAgo, today)
+
+        tvIncomeMonthLabel.text = monthLabel
+        tvExpenseMonthLabel.text = monthLabel
+        tvIncomeYearLabel.text = yearLabel
+        tvExpenseYearLabel.text = yearLabel
+    }
+
+    private fun buildCurrentMonthLabel(date: LocalDate): String {
+        val fullName = date.month.getDisplayName(TextStyle.FULL_STANDALONE, RUSSIAN_LOCALE)
+            .replaceFirstChar { char ->
+                if (char.isLowerCase()) char.titlecase(RUSSIAN_LOCALE) else char.toString()
+            }
+
+        val prepared = if (fullName.length > 6) {
+            abbreviateMonthNameForCard(fullName)
+        } else {
+            fullName
+        }
+
+        return "$prepared:"
+    }
+
+    private fun buildYearRangeLabel(startDate: LocalDate, endDate: LocalDate): String {
+        return "${formatMonthYearPart(startDate)}/${formatMonthYearPart(endDate)}"
+    }
+
+    private fun formatMonthYearPart(date: LocalDate): String {
+        val monthName = date.month.getDisplayName(TextStyle.FULL_STANDALONE, RUSSIAN_LOCALE)
+            .replaceFirstChar { char ->
+                if (char.isLowerCase()) char.titlecase(RUSSIAN_LOCALE) else char.toString()
+            }
+
+        val preparedMonth = abbreviateMonthNameForPeriod(monthName)
+        val yearPart = date.format(TWO_DIGIT_YEAR_FORMATTER)
+        return "$preparedMonth.$yearPart"
+    }
+
+    private fun abbreviateMonthNameForCard(name: String): String {
+        val limit = minOf(5, name.length)
+        for (index in limit downTo 1) {
+            val candidate = name.substring(0, index)
+            val lastChar = candidate.last()
+            if (!isRussianVowel(lastChar)) {
+                return candidate
+            }
+        }
+        return name.substring(0, 1)
+    }
+
+    private fun abbreviateMonthNameForPeriod(name: String): String {
+        val limit = minOf(4, name.length)
+        for (index in limit downTo 1) {
+            val candidate = name.substring(0, index)
+            val lastChar = candidate.last()
+            if (!isRussianVowel(lastChar)) {
+                return candidate
+            }
+        }
+        return name.substring(0, 1)
+    }
+
+    private fun isRussianVowel(char: Char): Boolean {
+        return char.lowercaseChar() in setOf('а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я')
     }
 
     private fun showBackupMenu() {
@@ -387,28 +470,38 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateIncomeValues() {
         val today = LocalDate.now()
+        val yearAgo = today.minusDays(365)
 
         val monthTotal = incomeDrafts
             .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
             .sumOf { parseAmount(it.amount) }
 
         val yearTotal = incomeDrafts
-            .filter { parseDraftDate(it.date)?.year == today.year }
+            .filter {
+                parseDraftDate(it.date)?.let { date ->
+                    !date.isBefore(yearAgo) && !date.isAfter(today)
+                } == true
+            }
             .sumOf { parseAmount(it.amount) }
 
-        tvIncomeMonthValue.text = formatMoney(monthTotal)
-        tvIncomeYearValue.text = formatMoney(yearTotal)
+        tvIncomeMonthValue.text = formatMoneyRounded(monthTotal)
+        tvIncomeYearValue.text = formatMoneyRounded(yearTotal)
     }
 
     private fun updateExpenseValues() {
         val today = LocalDate.now()
+        val yearAgo = today.minusDays(365)
 
         val documentationMonth = documentationExpenseDrafts
             .filter { parseDraftDate(it.date)?.let { date -> isSameMonth(date, today) } == true }
             .sumOf { parseAmount(it.amount) }
 
         val documentationYear = documentationExpenseDrafts
-            .filter { parseDraftDate(it.date)?.year == today.year }
+            .filter {
+                parseDraftDate(it.date)?.let { date ->
+                    !date.isBefore(yearAgo) && !date.isAfter(today)
+                } == true
+            }
             .sumOf { parseAmount(it.amount) }
 
         val techniqueMonth = techniqueExpenseDrafts
@@ -416,14 +509,18 @@ class MainActivity : AppCompatActivity() {
             .sumOf { parseAmount(it.amount) }
 
         val techniqueYear = techniqueExpenseDrafts
-            .filter { parseDraftDate(it.date)?.year == today.year }
+            .filter {
+                parseDraftDate(it.date)?.let { date ->
+                    !date.isBefore(yearAgo) && !date.isAfter(today)
+                } == true
+            }
             .sumOf { parseAmount(it.amount) }
 
         val monthTotal = documentationMonth + techniqueMonth
         val yearTotal = documentationYear + techniqueYear
 
-        tvExpenseMonthValue.text = formatMoney(monthTotal)
-        tvExpenseYearValue.text = formatMoney(yearTotal)
+        tvExpenseMonthValue.text = formatMoneyRounded(monthTotal)
+        tvExpenseYearValue.text = formatMoneyRounded(yearTotal)
     }
 
     private fun updateTopSalaryValue() {
@@ -447,7 +544,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateCostValues() {
         val today = LocalDate.now()
-        val fromDate = today.minusDays(365)
+        val fromDate = today.minusYears(3)
 
         val allOdometerPoints = buildOdometerPoints()
         if (allOdometerPoints.size < 2) {
@@ -1028,6 +1125,11 @@ class MainActivity : AppCompatActivity() {
         return "${formatter.format(value)} €"
     }
 
+    private fun formatMoneyRounded(value: Double): String {
+        val formatter = NumberFormat.getIntegerInstance(Locale("ru"))
+        return "${formatter.format(value.roundToLong())} €"
+    }
+
     private fun showMileageInputDialog() {
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
@@ -1113,6 +1215,9 @@ class MainActivity : AppCompatActivity() {
 
         private val BACKUP_FILE_DATE_TIME_FORMATTER: DateTimeFormatter =
             DateTimeFormatter.ofPattern("dd-MM_HH_mm")
+
+        private val TWO_DIGIT_YEAR_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yy")
 
         private val RUSSIAN_LOCALE = Locale("ru")
 

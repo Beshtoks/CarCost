@@ -14,6 +14,7 @@ import java.time.format.ResolverStyle
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.roundToLong
 
 class CostAnalysisActivity : AppCompatActivity() {
 
@@ -28,8 +29,10 @@ class CostAnalysisActivity : AppCompatActivity() {
     private lateinit var tvMileageValue: TextView
     private lateinit var tvAverageMileageDayValue: TextView
 
+    private lateinit var tvIncomePerDayValue: TextView
+    private lateinit var tvExpensePerDayAvgValue: TextView
+
     private lateinit var tvExpenseTotalValue: TextView
-    private lateinit var tvExpensePerDayValue: TextView
     private lateinit var tvTechniqueExpenseValue: TextView
     private lateinit var tvDocumentationExpenseValue: TextView
     private lateinit var tvFuelExpenseValue: TextView
@@ -42,6 +45,7 @@ class CostAnalysisActivity : AppCompatActivity() {
     private lateinit var tvTotalCostPerKmValue: TextView
     private lateinit var tvTotalCostPerDayValue: TextView
 
+    private val incomeDrafts = mutableListOf<IncomeDraft>()
     private val documentationExpenseDrafts = mutableListOf<DocumentationExpenseDraft>()
     private val techniqueExpenseDrafts = mutableListOf<TechniqueExpenseDraft>()
 
@@ -60,8 +64,10 @@ class CostAnalysisActivity : AppCompatActivity() {
         tvMileageValue = findViewById(R.id.tvMileageValue)
         tvAverageMileageDayValue = findViewById(R.id.tvAverageMileageDayValue)
 
+        tvIncomePerDayValue = findViewById(R.id.tvIncomePerDayValue)
+        tvExpensePerDayAvgValue = findViewById(R.id.tvExpensePerDayAvgValue)
+
         tvExpenseTotalValue = findViewById(R.id.tvExpenseTotalValue)
-        tvExpensePerDayValue = findViewById(R.id.tvExpensePerDayValue)
         tvTechniqueExpenseValue = findViewById(R.id.tvTechniqueExpenseValue)
         tvDocumentationExpenseValue = findViewById(R.id.tvDocumentationExpenseValue)
         tvFuelExpenseValue = findViewById(R.id.tvFuelExpenseValue)
@@ -93,6 +99,9 @@ class CostAnalysisActivity : AppCompatActivity() {
     }
 
     private fun loadStoredData() {
+        incomeDrafts.clear()
+        incomeDrafts.addAll(storage.loadIncomeDrafts())
+
         documentationExpenseDrafts.clear()
         documentationExpenseDrafts.addAll(storage.loadDocumentationDrafts())
 
@@ -149,27 +158,63 @@ class CostAnalysisActivity : AppCompatActivity() {
             return
         }
 
-        val filteredPoints = buildOdometerPoints()
-            .filter { !it.date.isBefore(dateFrom) && !it.date.isAfter(dateTo) }
-
-        if (filteredPoints.size < 2) {
-            showNoData()
-            tvPeriodValue.text = "${dateFrom.format(DATE_FORMATTER)} — ${dateTo.format(DATE_FORMATTER)}"
-            return
-        }
-
-        val segments = buildMileageSegments(filteredPoints)
-        if (segments.isEmpty()) {
-            showNoData()
-            tvPeriodValue.text = "${dateFrom.format(DATE_FORMATTER)} — ${dateTo.format(DATE_FORMATTER)}"
-            return
-        }
-
-        val averageDailyMileage = segments.map { it.dailyMileage }.average()
-        val totalMileage = filteredPoints.last().mileage - filteredPoints.first().mileage
-        val periodDays = ChronoUnit.DAYS.between(filteredPoints.first().date, filteredPoints.last().date)
+        val selectedPeriodDays = ChronoUnit.DAYS.between(dateFrom, dateTo)
             .toInt()
             .coerceAtLeast(1)
+
+        val incomeTotal = incomeDrafts
+            .filter { draft ->
+                val date = parseDate(draft.date) ?: return@filter false
+                !date.isBefore(dateFrom) && !date.isAfter(dateTo)
+            }
+            .sumOf { parseAmount(it.amount) }
+
+        val allDocumentationExpenses = documentationExpenseDrafts
+            .filter { draft ->
+                val date = parseDate(draft.date) ?: return@filter false
+                !date.isBefore(dateFrom) && !date.isAfter(dateTo)
+            }
+            .sumOf { parseAmount(it.amount) }
+
+        val allTechniqueExpenses = techniqueExpenseDrafts
+            .filter { draft ->
+                val date = parseDate(draft.date) ?: return@filter false
+                !date.isBefore(dateFrom) && !date.isAfter(dateTo)
+            }
+            .sumOf { parseAmount(it.amount) }
+
+        val incomePerDay = incomeTotal / selectedPeriodDays.toDouble()
+        val expensePerDayAvg = (allDocumentationExpenses + allTechniqueExpenses) / selectedPeriodDays.toDouble()
+
+        val allPoints = buildOdometerPoints()
+        val analysisPoints = buildAnalysisPoints(
+            allPoints = allPoints,
+            dateFrom = dateFrom,
+            dateTo = dateTo
+        )
+
+        tvPeriodValue.text = "${dateFrom.format(DATE_FORMATTER)} — ${dateTo.format(DATE_FORMATTER)}"
+        tvIncomePerDayValue.text = formatMoneyRounded(incomePerDay)
+        tvExpensePerDayAvgValue.text = formatMoneyRounded(expensePerDayAvg)
+
+        if (analysisPoints.size < 2) {
+            showMileageNoDataOnly()
+            return
+        }
+
+        val segments = buildMileageSegments(analysisPoints)
+        if (segments.isEmpty()) {
+            showMileageNoDataOnly()
+            return
+        }
+
+        val totalMileage = analysisPoints.last().mileage - analysisPoints.first().mileage
+        val mileageDays = ChronoUnit.DAYS.between(
+            analysisPoints.first().date,
+            analysisPoints.last().date
+        ).toInt().coerceAtLeast(1)
+
+        val averageDailyMileage = totalMileage.toDouble() / mileageDays.toDouble()
 
         val documentationExpenses = documentationExpenseDrafts
             .filter { draft ->
@@ -194,7 +239,6 @@ class CostAnalysisActivity : AppCompatActivity() {
         val fuelExpense = fuelDrafts.sumOf { parseAmount(it.amount) }
         val fuelLiters = fuelDrafts.sumOf { parseQuantity(it.quantity) }
         val totalExpenses = documentationExpenses + techniqueExpenses + fuelExpense
-        val expensePerDay = totalExpenses / periodDays.toDouble()
         val averageFuelPrice = if (fuelLiters > 0.0) fuelExpense / fuelLiters else 0.0
 
         val fuelConsumptions = segments.mapNotNull { segment ->
@@ -220,7 +264,7 @@ class CostAnalysisActivity : AppCompatActivity() {
             0.0
         }
 
-        val nonFuelPerDay = (documentationExpenses + techniqueExpenses) / periodDays.toDouble()
+        val nonFuelPerDay = (documentationExpenses + techniqueExpenses) / selectedPeriodDays.toDouble()
         val nonFuelCostPerKm = if (averageDailyMileage > 0.0) {
             nonFuelPerDay / averageDailyMileage
         } else {
@@ -230,24 +274,22 @@ class CostAnalysisActivity : AppCompatActivity() {
         val totalCostPerKm = nonFuelCostPerKm + fuelCostPerKm
         val totalCostPerDay = nonFuelPerDay + (fuelCostPerKm * averageDailyMileage)
 
-        tvPeriodValue.text = "${dateFrom.format(DATE_FORMATTER)} — ${dateTo.format(DATE_FORMATTER)}"
-        tvPointCountValue.text = "${filteredPoints.size} точек / ${segments.size} промежутков"
+        tvPointCountValue.text = "${analysisPoints.size} точек / ${segments.size} промежутков"
         tvMileageValue.text = "${formatKm(totalMileage)} км"
         tvAverageMileageDayValue.text = "${formatNumber(averageDailyMileage)} км/день"
 
         tvExpenseTotalValue.text = formatMoney(totalExpenses)
-        tvExpensePerDayValue.text = formatMoney(expensePerDay)
         tvTechniqueExpenseValue.text = formatMoney(techniqueExpenses)
         tvDocumentationExpenseValue.text = formatMoney(documentationExpenses)
         tvFuelExpenseValue.text = formatMoney(fuelExpense)
 
         tvFuelLitersValue.text = if (fuelLiters > 0.0) "${formatNumber(fuelLiters)} л" else "—"
         tvFuelPriceAvgValue.text = if (averageFuelPrice > 0.0) "${formatMoney(averageFuelPrice)} / л" else "—"
-        tvFuelConsumptionValue.text = if (averageFuelConsumption > 0.0) "${formatNumber(averageFuelConsumption)} л/100 км" else "—"
-        tvFuelCostPerKmValue.text = if (fuelCostPerKm > 0.0) "${formatMoney(fuelCostPerKm)} / км" else "—"
+        tvFuelConsumptionValue.text = if (averageFuelConsumption > 0.0) "${formatNumber(averageFuelConsumption)} л / 100 км" else "—"
+        tvFuelCostPerKmValue.text = if (fuelCostPerKm > 0.0) formatMoney(fuelCostPerKm) else "—"
 
-        tvTotalCostPerKmValue.text = "${formatMoney(totalCostPerKm)} / км"
-        tvTotalCostPerDayValue.text = "${formatMoney(totalCostPerDay)} / сутки"
+        tvTotalCostPerKmValue.text = if (totalCostPerKm > 0.0) formatMoney(totalCostPerKm) else "—"
+        tvTotalCostPerDayValue.text = if (totalCostPerDay > 0.0) formatMoney(totalCostPerDay) else "—"
     }
 
     private fun buildOdometerPoints(): List<OdometerPoint> {
@@ -275,6 +317,26 @@ class CostAnalysisActivity : AppCompatActivity() {
         }
 
         return points
+            .distinctBy { "${it.date}|${it.mileage}" }
+            .sortedWith(compareBy<OdometerPoint> { it.date }.thenBy { it.mileage })
+    }
+
+    private fun buildAnalysisPoints(
+        allPoints: List<OdometerPoint>,
+        dateFrom: LocalDate,
+        dateTo: LocalDate
+    ): List<OdometerPoint> {
+        if (allPoints.isEmpty()) return emptyList()
+
+        val pointBeforeOrOnStart = allPoints.lastOrNull { !it.date.isAfter(dateFrom) }
+        val pointAfterOrOnEnd = allPoints.firstOrNull { !it.date.isBefore(dateTo) }
+        val pointsInside = allPoints.filter { !it.date.isBefore(dateFrom) && !it.date.isAfter(dateTo) }
+
+        return buildList {
+            if (pointBeforeOrOnStart != null) add(pointBeforeOrOnStart)
+            addAll(pointsInside)
+            if (pointAfterOrOnEnd != null) add(pointAfterOrOnEnd)
+        }
             .distinctBy { "${it.date}|${it.mileage}" }
             .sortedWith(compareBy<OdometerPoint> { it.date }.thenBy { it.mileage })
     }
@@ -340,6 +402,11 @@ class CostAnalysisActivity : AppCompatActivity() {
         return "${formatter.format(value)} €"
     }
 
+    private fun formatMoneyRounded(value: Double): String {
+        val formatter = NumberFormat.getIntegerInstance(Locale("ru"))
+        return "${formatter.format(value.roundToLong())} €"
+    }
+
     private fun formatNumber(value: Double): String {
         val formatter = NumberFormat.getNumberInstance(Locale("ru"))
         formatter.minimumFractionDigits = 0
@@ -352,12 +419,30 @@ class CostAnalysisActivity : AppCompatActivity() {
         return formatter.format(value)
     }
 
-    private fun showNoData() {
+    private fun showMileageNoDataOnly() {
         tvPointCountValue.text = "Недостаточно данных"
         tvMileageValue.text = "—"
         tvAverageMileageDayValue.text = "—"
         tvExpenseTotalValue.text = "—"
-        tvExpensePerDayValue.text = "—"
+        tvTechniqueExpenseValue.text = "—"
+        tvDocumentationExpenseValue.text = "—"
+        tvFuelExpenseValue.text = "—"
+        tvFuelLitersValue.text = "—"
+        tvFuelPriceAvgValue.text = "—"
+        tvFuelConsumptionValue.text = "—"
+        tvFuelCostPerKmValue.text = "—"
+        tvTotalCostPerKmValue.text = "—"
+        tvTotalCostPerDayValue.text = "—"
+    }
+
+    private fun showNoData() {
+        tvPeriodValue.text = "—"
+        tvPointCountValue.text = "Недостаточно данных"
+        tvMileageValue.text = "—"
+        tvAverageMileageDayValue.text = "—"
+        tvIncomePerDayValue.text = "—"
+        tvExpensePerDayAvgValue.text = "—"
+        tvExpenseTotalValue.text = "—"
         tvTechniqueExpenseValue.text = "—"
         tvDocumentationExpenseValue.text = "—"
         tvFuelExpenseValue.text = "—"

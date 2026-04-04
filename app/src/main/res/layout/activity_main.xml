@@ -136,7 +136,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_height="150dp"
             android:layout_marginTop="12dp"
             android:baselineAligned="false"
             android:orientation="horizontal"
@@ -166,6 +166,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
+                    android:layout_marginTop="4dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -185,53 +186,57 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
+                        android:autoSizeMaxTextSize="33sp"
+                        android:autoSizeMinTextSize="18sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
                         android:gravity="end"
                         android:maxLines="1"
                         android:text="0 €"
                         android:textColor="@android:color/black"
-                        android:textStyle="bold"
-                        android:autoSizeTextType="uniform"
-                        android:autoSizeMinTextSize="12sp"
-                        android:autoSizeMaxTextSize="22sp"
-                        android:autoSizeStepGranularity="1sp" />
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="4dp"
                     android:background="#33000000" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:layout_weight="1.15"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvIncomeYearLabel"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:maxLines="1"
                         android:text="@string/year"
+                        android:textAlignment="center"
                         android:textColor="@android:color/black"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvIncomeYearValue"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:gravity="end"
+                        android:layout_marginTop="4dp"
+                        android:autoSizeMaxTextSize="34sp"
+                        android:autoSizeMinTextSize="18sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:gravity="center"
                         android:maxLines="1"
                         android:text="0 €"
                         android:textColor="@android:color/black"
-                        android:textStyle="bold"
-                        android:autoSizeTextType="uniform"
-                        android:autoSizeMinTextSize="12sp"
-                        android:autoSizeMaxTextSize="22sp"
-                        android:autoSizeStepGranularity="1sp" />
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -259,6 +264,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
+                    android:layout_marginTop="4dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -278,53 +284,57 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
+                        android:autoSizeMaxTextSize="33sp"
+                        android:autoSizeMinTextSize="18sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
                         android:gravity="end"
                         android:maxLines="1"
                         android:text="0 €"
                         android:textColor="@android:color/black"
-                        android:textStyle="bold"
-                        android:autoSizeTextType="uniform"
-                        android:autoSizeMinTextSize="12sp"
-                        android:autoSizeMaxTextSize="22sp"
-                        android:autoSizeStepGranularity="1sp" />
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="4dp"
                     android:background="#33000000" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:layout_weight="1.15"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvExpenseYearLabel"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:maxLines="1"
                         android:text="@string/year"
+                        android:textAlignment="center"
                         android:textColor="@android:color/black"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvExpenseYearValue"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:gravity="end"
+                        android:layout_marginTop="4dp"
+                        android:autoSizeMaxTextSize="34sp"
+                        android:autoSizeMinTextSize="18sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:gravity="center"
                         android:maxLines="1"
                         android:text="0 €"
                         android:textColor="@android:color/black"
-                        android:textStyle="bold"
-                        android:autoSizeTextType="uniform"
-                        android:autoSizeMinTextSize="12sp"
-                        android:autoSizeMaxTextSize="22sp"
-                        android:autoSizeStepGranularity="1sp" />
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -406,10 +416,10 @@
             android:id="@+id/cardSoon"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="12dp"
-            android:layout_weight="1"
+            android:layout_marginTop="10dp"
+            android:layout_weight="0.82"
             android:background="@drawable/bg_card_soon"
-            android:minHeight="260dp"
+            android:minHeight="210dp"
             android:orientation="vertical"
             android:padding="12dp">
 
@@ -519,32 +529,26 @@
         <Button
             android:id="@+id/btnAddIncome"
             android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_marginEnd="8dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_action_green"
-            android:backgroundTint="@null"
+            android:backgroundTint="#2E7D32"
             android:text="@string/add_income"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null" />
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnAddExpense"
             android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_marginStart="8dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_action_red"
-            android:backgroundTint="@null"
+            android:backgroundTint="#C62828"
             android:text="@string/add_expense"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null" />
+            android:textStyle="bold" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
